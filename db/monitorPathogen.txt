@@ -1,0 +1,16 @@
+TaxonId	Species
+12175	Apple chlorotic leaf spot virus
+1211388	Apple green crinkle associated virus
+1737346	Apple hammerhead viroid-like circular RNA
+12319	Apple mosaic virus
+2164102	Apple rubbery wood virus 1
+2164103	Apple rubbery wood virus 2
+28347	Apple stem grooving virus
+35350	Apple stem pitting virus
+75387	Apricot latent virus
+351426	Asian prunus virus 2
+351428	Asian prunus virus 3
+37692	Candidatus Phytoplasma mali
+135727	Candidatus Phytoplasma ziziphi
+69896	Candidatus Phytoplasma solani
+59748	Candidatus Phytoplasma australiense

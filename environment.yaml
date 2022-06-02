@@ -1,0 +1,39 @@
+name: phytopipe
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - bbmap
+  - bedtools
+  - bcftools
+  - biopython
+  - blast>=2.10
+  - bowtie2
+  - bwa
+  - cython
+  - diamond
+  - entrez-direct
+  - fastqc
+  - jellyfish
+  - kaiju
+  - kraken2
+  - krona>=2.7
+  - matplotlib
+  - multiqc
+  - mummer4
+  - numpy
+  - pandas
+  - parallel
+  - python=3.7
+  - pysam
+  - quast
+  - salmon
+  - samtools
+  - scipy
+  - seqtk
+  - snakemake>=5.13
+  - spades
+  - trimmomatic
+  - trinity
+
