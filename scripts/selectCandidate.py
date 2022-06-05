@@ -290,7 +290,7 @@ def mergeBlast(blastnDict, blastxDict, contig_file):
         elif idDict[id] == 1: #id in only blastn
             outDict[id] = empty + "\t".join(blastnDict[id]) + "\t" + seq.seq
         else:  #id in only blastx
-            outDict[id] = "\t".join(blastxDict[id]) + "\t" + empty + "\t" + seq.seq
+            outDict[id] = "\t".join(blastxDict[id]) + "\t" + empty + seq.seq
 
     contig_dict.close()
     
