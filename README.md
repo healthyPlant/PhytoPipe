@@ -74,7 +74,7 @@ For raw Illumina flowcell's data input dry-run:
 $ snakemake  --configfile /path/to/PhytoPipe/config.yaml -s /path/to/PhytoPipe/Snakefile --config workDir=/path/to/output/folder flowCellDir=/path/to/Illumina/run --cores [number of cores ex. 16] -n
 ```
 
-If dry-run (-n) succeeds, pleasde remove '-n' parameter to run the pipeline. If you'd like to run it in the background, please use 'nohup' and '&'. For example
+If dry-run (-n) succeeds, pleasde remove '-n' parameter to run the pipeline. If you'd like to run it in the background, please use 'nohup' and '&'. For example:
 ```shell
 $ nohup snakemake  --configfile /path/to/PhytoPipe/config.yaml -s /path/to/PhytoPipe/Snakefile --config workDir=/path/to/output/folder fastqDir=/path/to/input/fastq/folder --cores [number of cores ex. 16] &
 ```
