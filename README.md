@@ -55,7 +55,7 @@ Activate the environment:
 
 `conda activate phytopipe`
 
-If you want to remove PhytoPipe, simply type the follwowing command,
+If you want to remove PhytoPipe, simply type the following command,
 
 `conda env remove --name phytopipe`
 
