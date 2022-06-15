@@ -78,7 +78,7 @@ If dry-run (-n) succeeds, please remove '-n' parameter to run the pipeline. If y
 ```shell
 $ nohup snakemake  --configfile /path/to/PhytoPipe/config.yaml -s /path/to/PhytoPipe/Snakefile --config workDir=/path/to/output/folder fastqDir=/path/to/input/fastq/folder --cores [number of cores ex. 16] &
 ```
-Note: For workDir and fastqDir paths, full paths must be used.
+**Important:** For workDir and fastqDir paths, full paths must be used.
 
 You can view progress or errors in the file 'nohup.out'
 
