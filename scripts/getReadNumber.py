@@ -232,11 +232,13 @@ def main():
         clFile = cleanDir + "/" + sample + ".pathogen.fastq.gz"
         rnaFile = rRNADir + "/" + sample + ".log"
         #print(rnaFile)
+        #print(clFile)
         paired = False
         if not os.path.exists(clFile):
             clFile = cleanDir + "/" + sample + "_" + strand2 + ".pathogen.fastq.gz"
-            paired = True
-        
+            if os.path.exists(clFile):
+                paired = True
+        #print(clFile)
         #get rRNA %
         #bbduk reports total reads (2 * read pairs for paired-end reads)
         cmd = "grep 'Total Removed:' " + rnaFile + " | awk '{gsub(/[()]/,\"\");print $5}' "
@@ -270,9 +272,11 @@ def main():
         
         #Trimmomatic report Read Pairs for paired-end
         cmd = "grep 'Input Read' " + tmFile + " | awk -F: '{print $3}' | cut -d' ' -f2"
+        #print(cmd)
         trim = subprocess.check_output(cmd, shell=True)
         trim = trim.decode("utf-8").strip()
-        #prsint(trim)
+        #print(trim)
+        #print(paired)
         if paired:
             trim = str(int(trim) * 2)
 

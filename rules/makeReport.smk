@@ -12,6 +12,7 @@ reportFile = reportDir + "/report.txt"
 qcDir = config["run_info"]["qc"]
 annotateDir = config["run_info"]["annotate"]
 logDir = config["run_info"]["log"]
+seq_type = config["seq_type"]
 strand1 = config["strand1"]
 strand2 = config["strand2"]
 fastq_format = config["input_format"]
@@ -186,7 +187,7 @@ rule generate_report:
     priority: -100
     shell:
         """
-        if [ ! {strand1} ]; then
+        if [ {seq_type}=='se' ]; then
             python {scripts_dir}/getReport.py -a {acronymDb} -o {output.rpt} -w {workDir}
         else
             python {scripts_dir}/getReport.py -f {strand1} -r {strand2} -a {acronymDb} -o {output.rpt} -w {workDir}
@@ -232,6 +233,6 @@ rule generate_htmlReport:
         fi
 
 	    #generate a html report
-        python {scripts_dir}/getHtmlReport.py {workDir} {monitorPathogen} {reportDir} {input.rpt} {output.html}
+        python {scripts_dir}/getHtmlReport.py {workDir} {monitorPathogen} {workDir}/{reportDir} {input.rpt} {output.html}
 		rm -rf {reportDir}/*.failed.fasta
 	    """
