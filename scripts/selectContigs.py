@@ -45,6 +45,7 @@ def getRelation(refFile):
             cells = line.rstrip().split('\t')
             length = int(cells[3])
             identity = cells[2]
+            id = cells[1]
             if "acc|" in cells[1]:
                 id = cells[1].split("|")[-2]
             elif "." in cells[1]:
