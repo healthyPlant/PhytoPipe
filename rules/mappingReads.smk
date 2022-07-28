@@ -65,7 +65,9 @@ rule retrieve_references:
       if [ ! -d {output.refSeq} ]; then 
         mkdir {output.refSeq}  
       fi    
-	    python {scripts_dir}/selectCandidate.py -n {input.blastnOut} -x {input.blastxOut} -k {input.krakenReport} -j {input.kaijuTable} -c {input.contigs} -s {output.selectedRef} -a {output.blastnx} -l {output.refNamen} -r {output.refNamex}
+      #sort blastn.txt by bitsocre
+      sort -nk12,12 -r {input.blastnOut} > {input.blastnOut}.sorted    
+      python {scripts_dir}/selectCandidate.py -n {input.blastnOut}.sorted -x {input.blastxOut} -k {input.krakenReport} -j {input.kaijuTable} -c {input.contigs} -s {output.selectedRef} -a {output.blastnx} -l {output.refNamen} -r {output.refNamex}
       if [[ -s {output.refNamen} ]]; then   #check if file is not empty
         bash {scripts_dir}/getSeq.sh {nt} {viralRefDb} {scripts_dir} {output.refNamen} {output.refSeq}
       fi

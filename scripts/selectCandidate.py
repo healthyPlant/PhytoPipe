@@ -137,7 +137,7 @@ def getKraken(kFile):
             if cells[4] == '10239':  #Viruses clade starts
                 vFlag = 1
                 continue    
-            if vFlag == 1 and cells[3] == 'S' and float(cells[2]) >= kraken_viral_cutoff and 'synthetic construct' not in cells[5]: 
+            if vFlag == 1 and cells[3].startswith('S') and float(cells[2]) >= kraken_viral_cutoff and 'synthetic construct' not in cells[5]: 
                 #[cells[0],cells[2],cells[4], cells[5],'Viruses'] = ['PercentageOfMappedReads', 'NumberOfReads', "TaxonId", 'Species', 'Domain']
                 krakenDict[cells[4]] = cells[2] #taxon_id => reads
 
@@ -177,6 +177,7 @@ def selectTop(blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cutoff_blast
         for id in blastnDict:
             if id not in outDict and blastnDict[id][13] not in taxonDict:  #if a contig or a taxon is not previously selected 
                 #if taxon_id in both kraken2 and blastn, and blastn evalue < cutoff, keep it
+                #print(id, tid, blastnDict[id][13], blastnDict[id][10])
                 if tid == blastnDict[id][13] and float(blastnDict[id][10]) <= evalue_cutoff_blastn: #if the same taxon id
                     outDict[id] = "\t".join(blastnDict[id]) + "\tBlastn"
                     taxonDict[blastnDict[id][13]] = 1
