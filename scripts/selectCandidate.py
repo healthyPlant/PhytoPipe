@@ -253,7 +253,7 @@ def getRefName(selectDict):
         if "acc|" in cells[1]:
             rid = cells[1].split("|")[-2]    
         #for blastx, taxid not in blastn       
-        if (cells[-1] == 'Blastx' and float(cells[10]) <= evalue_cutoff_blastx and cells[13] not in taxDict):
+        if (cells[-1] == 'Blastx' and float(cells[10]) <= evalue_cutoff_blastx and (float(cells[10]) == 0.0 or cells[13] not in taxDict)):
             if (cells[13] not in idDictx or float(cells[11]) > bitscoreDictx[cells[13]]): #keep the taxon having the higher bitscore  
                 cid = rid + "_" + cells[13]
                 idDictx[cid] = rid #one ref id per tax id
