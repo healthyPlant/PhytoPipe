@@ -258,6 +258,11 @@ def setReport(reportDict, refNameFile, refDir, mapDir, ncbiBlastDir, sample, tri
             blast = "nan\tnan\tnan\tnan\tnan"
 
         id = sample + "|" + ref
+        #in case reference id in both consensus and contig
+        if id in reportDict:
+            print(id, " has both consensus and contig in the report")
+            id = sample + "|" + ref + ".1"
+
         reportDict.setdefault(id, [])
         #reportDict[id].extend(map(str,[round(readStat[sample][0],2), int(readStat[sample][1]), round(trimReadStat[sample][0],2), int(trimReadStat[sample][1])]))
         reportDict[id].extend(readStat0)
