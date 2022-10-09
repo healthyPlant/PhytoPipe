@@ -372,12 +372,12 @@ df9 = df[["Sample","RefId","Species","Acronym","RefLen","MappedReads","RPKM","Pe
 df9c = df9.copy()  #ro prevent SettingWithCopyWarning
 df9c['MappingGraph'] = "<a href=\"image/" + df9['Sample'] + "." + df9['RefId'] + ".coverage.png\" alt=\"" + df9['Sample'] + " " + df9['RefId'] + " coverage graph\" target=\"_blank\">" + df9['Sample'] + " " + df9['RefId'] +"</a>"
 #if no maping graph file exists, set value to None
-for i in range(len(df9c.index)):
-    filename = rptdir + "/image/" + df9c.loc[i].Sample + "." + df9c.loc[i].RefId + ".coverage.png"
+#for i in range(len(df9c.index)):
+#    filename = rptdir + "/image/" + df9c.loc[i].Sample + "." + df9c.loc[i].RefId + ".coverage.png"
     #print(filename)
-#    if not os.path.exists(filename):
-    if not os.path.isfile(filename): 
-        df9c.at[i,'MappingGraph'] = None
+    #if not os.path.exists(filename):
+    #if not os.path.isfile(filename): 
+    #    df9c.at[i,'MappingGraph'] = None
        
 map2Ref = df9c.to_html(index=False, escape=False, col_space=200).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
 
