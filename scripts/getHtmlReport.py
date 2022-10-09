@@ -375,7 +375,8 @@ df9c['MappingGraph'] = "<a href=\"image/" + df9['Sample'] + "." + df9['RefId'] +
 for i in range(len(df9c.index)):
     filename = rptdir + "/image/" + df9c.loc[i].Sample + "." + df9c.loc[i].RefId + ".coverage.png"
     #print(filename)
-    if not os.path.exists(filename):
+#    if not os.path.exists(filename):
+    if not os.path.isfile(filename): 
         df9c.at[i,'MappingGraph'] = None
        
 map2Ref = df9c.to_html(index=False, escape=False, col_space=200).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
