@@ -9,8 +9,6 @@ logDir = config["run_info"]["log"]
 assembleDir = config["run_info"]["assemble"]
 qcDir = config["run_info"]["qc"]
 seq_type = config["seq_type"]
-strand1 = config["strand1"]
-strand2 = config["strand2"]
 samples = config["samples"]
 assembler = config["assembler"]
 spades_param = config["spades_param"]
@@ -26,14 +24,14 @@ else:
 def assemble_inputs(wildcards):
     if (mapReadType == 'clean'):
         if (seq_type == "pe"):
-            reads = expand(cleanDir + "/{sample}_{strand}.pathogen.fastq.gz", strand=[strand1,strand2], sample=wildcards.sample)
+            reads = expand(cleanDir + "/{sample}_{strand}.pathogen.fastq.gz", strand=['R1','R2'], sample=wildcards.sample)
         elif (seq_type == "se"):
             reads = cleanDir + "/{sample}.pathogen.fastq.gz"
         else:
             sys.exit("Error: invalid sequencing type parameter. Must be 'se' or 'pe'")
     else:
         if (seq_type == "pe"):
-            reads = expand(trimDir + "/{sample}_{strand}.trimmed.fastq.gz", strand=[strand1,strand2], sample=wildcards.sample)
+            reads = expand(trimDir + "/{sample}_{strand}.trimmed.fastq.gz", strand=['R1','R2'], sample=wildcards.sample)
         elif (seq_type == "se"):
             reads = trimDir + "/{sample}.trimmed.fastq.gz"
         else:
@@ -54,10 +52,6 @@ if assembler == "Spades":
             """--- assemble {wildcards.sample} genome using SPAdes."""
         params:
             param = spades_param,
-            #param = " --only-assembler --phred-offset 33 -k 21,51,71,91 ",
-            #"  --careful " #    Tries to reduce the number of mismatches and short indels. Also runs MismatchCorrector a post processing tool, which uses BWA tool (comes with SPAdes). This option is recommended only for assembly of small genomes. We strongly recommend not to use it for large and medium-size eukaryotic genomes. Note, that this options is is not supported by metaSPAdes and rnaSPAdes.
-            #" -k 21,51,71,91 "
-            #" -k 21,31,41,51,61 "
             sampleDir = assembleDir + "/{sample}/spades",
             paired_string = paired_string,
         threads: config["number_of_threads"] 
@@ -98,7 +92,7 @@ else:
         input:
             read = assemble_inputs 
         output:
-            contigs = assembleDir + "/{sample}/contigs.fasta" #protected()
+            contigs = assembleDir + "/{sample}/contigs.fasta" 
         message:
             """--- assemble {wildcards.sample} genome using Trinity."""
         params:

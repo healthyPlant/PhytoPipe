@@ -24,74 +24,6 @@ samples = config["samples"]
 monitorPathogen = config["monitorPathogen"]
 blastEvalue = config["blastEvalue"]
 
-'''
-rule blastn_NCBI:
-    """
-    Blastn remotely againt NCBI nt
-    """
-    input:
-	    consensus = mapDir + "/map2Ref/{sample}",
-	    contig = novelDir + "/finalAssembly/{sample}"
-    output:
-	    done = touch(logDir + '/checkPoint/{sample}.blastn.done'),   
-	    #smpRpt = reportDir + "/ncbiBlast/{sample}" #if input {sample} , output must {sample}, can't use folder here
-    message:
-	    """--- Blastn {wildcards.sample} consensus against NCBI nt."""
-    priority: -10
-    params:
-	    blast = " -b blastn -d nt ", #blast NCBI nt, " -b blastx -d nr ", #blastx NCBI nr
-	    out = reportDir + "/ncbiBlast/{sample}"
-    shell:
-        """
-        #if [ -f {output.done} ]; then
-        #    exit 1
-        #fi
-
-        if [ ! -d {reportDir}/ncbiBlast ]; then 
-            mkdir -p {reportDir}/ncbiBlast  
-        fi  
-        
-        #copy reference based consensus to report/ncbiBlast folder and run NCBI Blastn
-        smp=$(basename {input.consensus})
-        inputPath=$(echo {input.consensus} | sed -e 's;\/[^/]*$;;')
-        fileNum=$(find $inputPath -name "$smp.*.consensus.N.fasta" | wc -l)
-        #echo $fileNum
-        if (( $fileNum > 0 )); then
-            for consensus in `ls {input.consensus}.*.consensus.N.fasta`  #file name has sample name and refernce name
-            do
-                consensus0=$(basename $consensus '.consensus.N.fasta' )
-                refName="$(cut -d'.' -f2- <<<"$consensus0")"
-                #if  [[ -f $consensus ]] && [[ ! -f {params.out}.$refName.consensus.blastn.txt ]]; then
-                    #change sequence title
-                    sed "1s/^.*$/>$smp.$refName/" "$consensus" > {params.out}.$refName.consensus.fasta #give the sequence new title and copy consensus files to report folder
-                    echo "blastn $smp.$refName consensus againt NCBI nt"
-                    python {scripts_dir}/remoteBlast.py  -i $consensus -o {params.out}.$refName.consensus.blastn.txt {params.blast}
-                #fi
-            done
-        fi
-        
-        #copy contig consensus to report/ncbiBlast folder and run NCBI Blastn
-        smp=$(basename {input.contig})
-        inputPath=$(echo {input.contig} | sed -e 's;\/[^/]*$;;')
-        fileNum=$(find {input.contig} -name '*.contig.fasta' | wc -l)
-        #echo $fileNum
-        if (( $fileNum > 0 )); then
-            #copy final assembly files to report folder
-            #find $inputPath -name '$smp.*.contig.fasta' -exec cp {{}} {reportDir}/ncbiBlast \;  #note: must use {{}}, not single curly brackets for snakemake
-            for contig in `ls {input.contig}/*.contig.fasta` 
-            do
-                refName=$(basename $contig .contig.fasta)  #remove '.contig.fasta'
-                #if [ ! -f {params.out}.$refName.contig.blastn.txt ]; then
-                    cp $contig {params.out}.$refName.contig.fasta
-                    echo "blastn $smp.$refName contig againt NCBI nt"
-                    python {scripts_dir}/remoteBlast.py  -i $contig -o {params.out}.$refName.contig.blastn.txt {params.blast}
-                #fi
-            done
-        fi        
-        
-        """
-'''
-
 rule blastn_local:
     """
     Blastn againt local NCBI nt
@@ -181,16 +113,17 @@ rule generate_report:
 	    map2RefDone = expand(logDir + "/checkPoint/{smp}.map2Ref.done", smp=samples),
 	    map2ContigDone = expand(logDir + "/checkPoint/{smp}.map2Contig.done", smp=samples),
     output:
-	    rpt = reportFile
+	    rpt = reportFile,
+	    log = logDir + "/report/report.log"
     message:
 	    '''--- Generate the final report.'''
     priority: -100
     shell:
         """
         if [ {seq_type}=='se' ]; then
-            python {scripts_dir}/getReport.py -a {acronymDb} -o {output.rpt} -w {workDir}
+            python {scripts_dir}/getReport.py -a {acronymDb} -o {output.rpt} -w {workDir} > {output.log}
         else
-            python {scripts_dir}/getReport.py -f {strand1} -r {strand2} -a {acronymDb} -o {output.rpt} -w {workDir}
+            python {scripts_dir}/getReport.py -f {strand1} -r {strand2} -a {acronymDb} -o {output.rpt} -w {workDir} > {output.log}
         fi
         """
         

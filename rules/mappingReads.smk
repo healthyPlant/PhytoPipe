@@ -13,8 +13,6 @@ cleanDir = config["run_info"]["clean"]
 reportDir = config["run_info"]["report"]
 novelDir = config["run_info"]["novel"]
 seq_type = config["seq_type"]
-strand1 = config["strand1"]
-strand2 = config["strand2"]
 nt = config["blastnDb"]  #NCBI blastdb nt
 viralRefDb = config["blastnViralDb"]
 mappingTool = config["mappingTool"]
@@ -26,14 +24,14 @@ mapReadType = config["mapReadType"]
 def map_inputs(wildcards):
     if (mapReadType == 'clean'):
       if (seq_type == "pe"):
-          reads = expand(cleanDir + "/{sample}_{strand}.pathogen.fastq.gz", strand=[strand1,strand2], sample=wildcards.sample)
+          reads = expand(cleanDir + "/{sample}_{strand}.pathogen.fastq.gz", strand=['R1','R2'], sample=wildcards.sample)
       elif (seq_type == "se"):
           reads = cleanDir + "/{sample}.pathogen.fastq.gz"
       else:
           sys.exit("Error: invalid sequencing type parameter. Must be 'se' or 'pe'")
     else:
       if (seq_type == "pe"):
-          reads = expand(trimDir + "/{sample}_{strand}.trimmed.fastq.gz", strand=[strand1,strand2], sample=wildcards.sample)
+          reads = expand(trimDir + "/{sample}_{strand}.trimmed.fastq.gz", strand=['R1','R2'], sample=wildcards.sample)
       elif (seq_type == "se"):
           reads = trimDir + "/{sample}.trimmed.fastq.gz"
       else:

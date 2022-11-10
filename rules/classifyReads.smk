@@ -11,8 +11,6 @@ krakenDb = config["krakenDb"]
 kaijuDb = config["kaijuDb"]
 taxDb = config["taxDb"]
 seq_type = config["seq_type"]
-strand1 = config["strand1"]
-strand2 = config["strand2"]
 
 if (seq_type == "pe"):
     paired_string = '--paired'
@@ -25,7 +23,7 @@ ruleorder: extractPathReads_pe > extractPathReads_se
 # Define input files
 def kraken_inputs(wildcards):
     if (seq_type == "pe"):
-        reads = expand(trimDir + "/{sample}_{strand}.trimmed.fastq.gz", strand=[strand1,strand2], sample=wildcards.sample)
+        reads = expand(trimDir + "/{sample}_{strand}.trimmed.fastq.gz", strand=['R1','R2'], sample=wildcards.sample)
     elif (seq_type == "se"):
         reads = trimDir + "/{sample}.trimmed.fastq.gz"
     else:
@@ -35,7 +33,7 @@ def kraken_inputs(wildcards):
 def kaiju_inputs(wildcards):
     reads = trimDir + "/{sample}.pathogen.fastq.gz"
     if (seq_type == "pe"):
-        reads = expand(trimDir + "/{sample}_{strand}.trimmed.fastq.gz", strand=[strand1,strand2], sample=wildcards.sample)
+        reads = expand(trimDir + "/{sample}_{strand}.trimmed.fastq.gz", strand=['R1','R2'], sample=wildcards.sample)
     elif (seq_type == "se"):
         reads = trimDir + "/{sample}.trimmed.fastq.gz"
     else:
@@ -77,8 +75,8 @@ rule run_kraken:
 		kraken2 --threads {threads} --db {krakenDb} {params.param} {params.paired_string} --output {output.readClass} --report {output.report} --unclassified-out $unclassifiedReadOut {input} &>> {log}
 		
 		if [ -f {params.unclassifiedRead}".R_2.fastq" ]; then
-			mv {params.unclassifiedRead}".R_1.fastq" {krakenDir}"/"{wildcards.sample}"_"{strand1}".kraken2.unclassified.fastq"
-			mv {params.unclassifiedRead}".R_2.fastq" {krakenDir}"/"{wildcards.sample}"_"{strand2}".kraken2.unclassified.fastq"
+			mv {params.unclassifiedRead}".R_1.fastq" {krakenDir}/{wildcards.sample}"_R1.kraken2.unclassified.fastq"
+			mv {params.unclassifiedRead}".R_2.fastq" {krakenDir}/{wildcards.sample}"_R2.kraken2.unclassified.fastq"
 		fi
 		"""
 
@@ -133,18 +131,18 @@ rule extractPathReads_pe:
 	input:
 		classFile = krakenDir + "/{sample}.kraken2.txt",
 		report = krakenDir + "/{sample}.kraken2.report.txt",
-		reads1 = trimDir + "/{sample}" + "_" + strand1 + ".trimmed.fastq.gz",
-		reads2 = trimDir + "/{sample}" + "_" + strand2 + ".trimmed.fastq.gz",
+		reads1 = trimDir + "/{sample}_R1.trimmed.fastq.gz",
+		reads2 = trimDir + "/{sample}_R2.trimmed.fastq.gz",
 	output:
 		idFile = temp(krakenDir + "/{sample}.pathogen.readId.txt"),
-		pathReadFile1 = temp(cleanDir + "/{sample}" + "_" + strand1 + ".pathogen.fastq"),
-		pathReadFile2 = temp(cleanDir + "/{sample}" + "_" + strand2 + ".pathogen.fastq"),
-		gzFile1 = cleanDir + "/{sample}" + "_" + strand1 + ".pathogen.fastq.gz",
-		gzFile2 = cleanDir + "/{sample}" + "_" + strand2 + ".pathogen.fastq.gz"
+		pathReadFile1 = temp(cleanDir + "/{sample}_R1.pathogen.fastq"),
+		pathReadFile2 = temp(cleanDir + "/{sample}_R2.pathogen.fastq"),
+		gzFile1 = cleanDir + "/{sample}_R1.pathogen.fastq.gz",
+		gzFile2 = cleanDir + "/{sample}_R2.pathogen.fastq.gz"
 	params:
 		param = " -t 2 10239 4751 4762 --include-children ", #bacteria, virus, fungi, oomycetes taxonomy id #archaea(2157),
-		unclassifiedRead1 = krakenDir + "/{sample}" + "_" + strand1 + ".kraken2.unclassified.fastq",
-		unclassifiedRead2 = krakenDir + "/{sample}" + "_" + strand2 + ".kraken2.unclassified.fastq"
+		unclassifiedRead1 = krakenDir + "/{sample}_R1.kraken2.unclassified.fastq",
+		unclassifiedRead2 = krakenDir + "/{sample}_R2.kraken2.unclassified.fastq"
 	message:
 		'''--- {wildcards.sample} pathogen reads extraction'''
 	shell:

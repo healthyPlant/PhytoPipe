@@ -16,7 +16,7 @@
 #   -o, --output X.........................Report file name 
 #Optional Parameters:
 #   -f, --forward..........................Forward strand surffix in the fastq file, ex. R1
-#   -f, --reverse..........................Reverse strand surffix in the fastq file, ex. R1
+#   -f, --reverse..........................Reverse strand surffix in the fastq file, ex. R2
 #######################################################################
 
 import sys, argparse
@@ -35,30 +35,20 @@ def parseJson(jsonFile):
     """
     with open(jsonFile) as f:
         data = json.load(f) #json.load() output a dict
-    #print(data["ConversionResults"]) # a list
     qualDict = {} #a dict of lists to store sample read quality
     for cr in data["ConversionResults"]: # a list of dict
-        #print(cr.keys()) #'LaneNumber', 'TotalClustersRaw', 'TotalClustersPF', 'Yield', 'DemuxResults', 'Undetermined'
         for sample in cr['DemuxResults']: # a list of dict
-            #print(sample.keys()) #'SampleId', 'SampleName', 'IndexMetrics', 'NumberReads', 'Yield', 'ReadMetrics'
-            #print(sample['SampleId'], sample['NumberReads'], sample['Yield'], end=' ')
-            
             yieldQ30 = qualityScoreSum = 0
             for read in sample['ReadMetrics']: # a list of dict
-                #print(read["Yield"], read['YieldQ30'], read['QualityScoreSum'])
                 yieldQ30 += read['YieldQ30']
                 qualityScoreSum += read['QualityScoreSum']
             avgQual = float(qualityScoreSum/sample['Yield'])
             q30Percent = float(yieldQ30/sample['Yield'] * 100)
-            #print(yieldQ30,qualityScoreSum, "{:.2f}".format(q30Percent), "{:.2f}".format(avgQual))    
-            #qualDict.setdefault(sample['SampleId'],[]).append([sample['NumberReads'], sample['Yield'],q30Percent, avgQual])
             qualDict.setdefault(sample['SampleName'],[]).append([sample['NumberReads'], sample['Yield'],q30Percent, avgQual])
                 
     #there are several lanes , get total yield and average qualily for a sample
     avgQualDict = {}
     for sample in qualDict:
-        #print(sample, end=' ')
-        #print(qualDict[sample])
         laneNum = len(qualDict[sample])
         totalRead = totalYield = totalQ30 = totalQual = 0
         for read in qualDict[sample]:
@@ -68,7 +58,6 @@ def parseJson(jsonFile):
             totalQual += read[3]
         avgQ30 = totalQ30/laneNum
         avgQual = totalQual/laneNum
-        #print(totalYield, avgQ30, avgQual)
         avgQualDict[sample] = [totalRead, "{:.0f}".format(totalYield/1000000), "{:.2f}".format(avgQ30), "{:.2f}".format(avgQual)]
     return(avgQualDict)
 
@@ -88,7 +77,6 @@ def getQualFromFastq(fastq_file):
     lineno = 0
     for line in gzip.open(fastq_file, "rt"):
         lineno += 1
-        #if lineno%4 == 1: flag = (line in ids)
         if lineno%4 == 0:
             line = line.strip() 
             qstr = list(line)
@@ -111,13 +99,11 @@ def sumQual(fastqFolder, input_format, strand1, strand2):
     """
     Run parallel to get each fastq file quality
     """
-    #fastqFiles = [os.path.basename(x) for x in glob.glob(fastqFolder + '/*.' +  input_format)]
     fastqFiles = [x for x in glob.glob(fastqFolder + '/*.' +  input_format)]
     #Parallel Processing multiple fastq.gz file 
     pool = multiprocessing.Pool() 
     outputs_async = pool.map_async(getQualFromFastq, fastqFiles) 
     outputs = outputs_async.get() #return a list of sets
-    #print("Output: {}".format(outputs)) # a list
 
     #convert set to list
     for i in range(len(outputs)):
@@ -194,20 +180,16 @@ def main():
 
     samples = [os.path.basename(x) for x in glob.glob(trimLogDir + '/*.log')]
     samples = [x.replace(".log","") for x in samples]
-    #print(samples)
 
 
     orderSmp = [" " for x in samples]
     if os.path.exists(statJsonFile):
         #sort sample by S\d number
         for sample in samples:
-            #print(sample)
             m = re.match("\S+_S(\d+)$",sample)
             if m:
-                #print(m.groups())
                 sNum = int(m.groups()[0]) - 1
                 orderSmp[sNum] = sample
-        #print(orderSmp)
     else:
         orderSmp = samples
 
@@ -219,23 +201,18 @@ def main():
     qualDict = {}
     if os.path.exists(statJsonFile):
         qualDict = parseJson(statJsonFile)
-    #elif(os.path.isdir(rawDir)):
     else:
         qualDict = sumQual(rawDir, input_format, strand1, strand2)
         
-    #print(qualDict)
     for sample in orderSmp:
-        #print(sample)
         rmFile = removeLogDir + "/" + sample + ".log"
         ctFile = contaminantLogDir + "/" + sample + ".log"
         tmFile = trimLogDir + "/" + sample + ".log"
         clFile = cleanDir + "/" + sample + ".pathogen.fastq.gz"
         rnaFile = rRNADir + "/" + sample + ".log"
-        #print(rnaFile)
-        #print(clFile)
         paired = False
         if not os.path.exists(clFile):
-            clFile = cleanDir + "/" + sample + "_" + strand2 + ".pathogen.fastq.gz"
+            clFile = cleanDir + "/" + sample + "_R2.pathogen.fastq.gz"
             if os.path.exists(clFile):
                 paired = True
         #print(clFile)
@@ -272,11 +249,8 @@ def main():
         
         #Trimmomatic report Read Pairs for paired-end
         cmd = "grep 'Input Read' " + tmFile + " | awk -F: '{print $3}' | cut -d' ' -f2"
-        #print(cmd)
         trim = subprocess.check_output(cmd, shell=True)
         trim = trim.decode("utf-8").strip()
-        #print(trim)
-        #print(paired)
         if paired:
             trim = str(int(trim) * 2)
 
@@ -288,13 +262,9 @@ def main():
         if paired:
             clean = str(int(clean) * 2)
 
-        #raw = qualDict[smp][0]
-        #print("Dup:", dup, "Raw:", raw)
         percentDup = "{:.2f}".format(float(dup)/float(raw)*100)
         percentTrim = "{:.2f}".format(float(trim)/float(raw)*100)
         percentClean = "{:.2f}".format(float(clean)/float(raw)*100)
-        #print(raw,dup,percentDup,ctm,trim,percentTrim, clean, percentClean)
-        #     
 
         if os.path.exists(statJsonFile):
             #remove _S\d at the end of sample
@@ -304,7 +274,6 @@ def main():
                 if paired and type(qualDict[smp][0]) == int:
                     qualDict[smp][0] = int(qualDict[smp][0])*2
                 rawQual = '\t'.join(map(str, qualDict[smp]))
-                #print(rawQual)
 
                 fout.write(rawQual) #sample + "\t" + rawQual + 
             except KeyError:

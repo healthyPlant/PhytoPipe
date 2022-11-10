@@ -1,0 +1,640 @@
+
+<!DOCTYPE html>
+<html lang="en" style="height: 100%;">
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    * {
+        box-sizing: border-box;
+       }
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    /* Style the header */
+    header {
+        background-color: #666;
+        padding: 10px;
+        text-align: center;
+        font-size: 35px;
+        color: white;
+    }
+    .sidenav {
+      height: 100%;
+      width: 200px;
+      position: fixed;
+      z-index: 1;
+      top: 0;
+      left: 0;
+      background-color: #eee;
+      overflow-x: hidden;
+      padding-top: 20px;
+    }
+
+    .sidenav a {
+      padding: 6px 8px 6px;
+      text-decoration: none;
+      font-size: 16px;
+      color: #2196F3;
+      display: block;
+    }
+
+    .sidenav a:hover {
+      color: #064579;
+    }
+
+    .main {
+      margin-left: 200px; /* Same as the width of the sidenav for sticky navigation*/
+      font-size: 16px; /* Increased text to enable scrolling */
+      padding: 0px 10px;
+    }
+    
+    @media screen and (max-height: 450px) {
+      .sidenav {padding-top: 15px;}
+      .sidenav a {font-size: 12px;}
+    }
+    
+    article {
+        float: left;
+        padding: 20px;
+        background-color: #f1f1f1;
+        width:100%;
+    }
+
+
+    </style>
+
+    <script>
+    function myFunction() { // for filter
+        var input, filter, table, tr, td, i,alltables;
+        alltables = document.querySelectorAll("table[data-name=mytable]");
+        input = document.getElementById("myInput");
+        filter = input.value.toUpperCase();
+        alltables.forEach(function(table){
+            tr = table.getElementsByTagName("tr");
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[0];
+                if (td) {
+                    if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        });
+    }
+    </script>
+    
+    </head>
+    
+    <body>
+        <header>
+            <h1>HTS Report</h1>
+        </header>
+
+        <section>
+            <!-- Sidebar -->
+            <div class="sidenav">
+                    <a href="#summary">Summary</a>
+                    <h4>Sample QC</h4>
+                    <a href="#rawQC">Raw reads QC</a>
+                    <a href="#cleanQC">Clean reads QC</a>
+                    <a href="#numQC">Reads number track</a>
+                    <a href="#assemblyQC">Assembly QC</a>
+                    <h4>Read classification</h4>
+                    <a href="#kraken2">Kraken2 (NCBI nt)</a>
+                    <a href="#kaiju">Kaiju (Pathogen nr)</a>
+                    <a href="#kk_overlap">Kraken2 and Kaiju overlap</a>
+                    <h4>Contig annotation</h4>
+                    <a href="#blastn">Blastn (viral refSeq)</a>
+                    <a href="#blastx">Blastx (RVDB)</a>
+                    <a href="#selectContig">Selected contigs</a>
+                    <h4>Mapping</h4>
+                    <a href="#mapping">Map reads to reference</a>
+                    <h4>Novel virus</h4>
+                    <a href="#novel">Map reads to contig</a>                    
+            </div>
+            
+            <div class="main">
+            <br>
+            <div class="card-body row no-gutters align-items-center pull-right">
+                  <label>Filter sample </label>
+                  <input type="text" id="myInput" onkeyup="myFunction()" placeholder="A sample name " title="Type in a sample name">
+            </div>
+
+            <article id=summary>
+            <h1>Virus NCBI blast</h1><table class="table table-striped" data-name="mytable">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Sample</th>
+      <th>RefId</th>
+      <th>Species</th>
+      <th>BlastType</th>
+      <th>BlastEvalue</th>
+      <th>BlastIdentity</th>
+      <th>BlastDescription</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NC_005286</td>
+      <td>Pelargonium flower break virus</td>
+      <td>consensus.blastn</td>
+      <td>0.0</td>
+      <td>99.770</td>
+      <td>gi|2047373755|gb|MT682302.1| Pelargonium flower break virus isolate DSMZ PV-0201 RNA-dependent RNA polymerase (ORF1), RNA polymerase pre-readthrough protein (ORF1), movement protein 1 (ORF3), movement protein 2 (ORF2), and capsid protein (ORF4) genes, complete cds</td>
+    </tr>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NC_040543</td>
+      <td>Chenopodium quinoa mitovirus 1</td>
+      <td>consensus.blastn</td>
+      <td>0.0</td>
+      <td>99.773</td>
+      <td>gi|1571831372|ref|NC_040543.1| Chenopodium quinoa mitovirus 1 isolate Che1, complete genome</td>
+    </tr>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NC_002815</td>
+      <td>Cactus virus X</td>
+      <td>consensus.blastn</td>
+      <td>0.0</td>
+      <td>99.238</td>
+      <td>gi|2054359628|gb|MW051787.1| Cactus virus X isolate DSMZ PV-0746 replication-associated protein (ORF1), triple gene block 1 protein (ORF2), triple gene block 2 protein (ORF3), triple gene block 3 protein (ORF4), and capsid protein (ORF5) genes, complete cds</td>
+    </tr>
+  </tbody>
+</table>
+            <h3><a href="finalConsensus.txt" target="_blank">View consensus</a></h3><br />
+            </article>
+            
+            <article id='rawQC'>
+            <h1>Raw reads QC</h1><table class="table table-striped" data-name="mytable">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Sample</th>
+      <th>Total Sequences</th>
+      <th>Sequences flagged as poor quality</th>
+      <th>Sequence length</th>
+      <th>%GC</th>
+      <th>total_deduplicated_percentage</th>
+      <th>avg_sequence_length</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dataset_8_R1</td>
+      <td>65177.0</td>
+      <td>0.0</td>
+      <td>35-301</td>
+      <td>49.0</td>
+      <td>37.42271</td>
+      <td>284.325007</td>
+    </tr>
+    <tr>
+      <td>Dataset_8_R2</td>
+      <td>65177.0</td>
+      <td>0.0</td>
+      <td>35-301</td>
+      <td>50.0</td>
+      <td>51.07630</td>
+      <td>289.401829</td>
+    </tr>
+  </tbody>
+</table>
+            
+            <h3>View raw reads fastQC report:</h3> <a href="html/Dataset_8_R1_fastqc.html">Dataset_8_R1   </a> &emsp;&emsp;<a href="html/Dataset_8_R2_fastqc.html">Dataset_8_R2   </a> &emsp;&emsp;<br /> <br><br>
+            <a href="html/raw_multiqc.html">All samples raw reads multiQC</a>
+            </article>
+            
+            <article id='cleanQC'>
+            <h1>Clean reads QC</h1><table class="table table-striped" data-name="mytable">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Sample</th>
+      <th>Total Sequences</th>
+      <th>Sequences flagged as poor quality</th>
+      <th>Sequence length</th>
+      <th>%GC</th>
+      <th>total_deduplicated_percentage</th>
+      <th>avg_sequence_length</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dataset_8_R1</td>
+      <td>36303.0</td>
+      <td>0.0</td>
+      <td>36-301</td>
+      <td>47.0</td>
+      <td>43.988100</td>
+      <td>222.257114</td>
+    </tr>
+    <tr>
+      <td>Dataset_8_R2</td>
+      <td>36303.0</td>
+      <td>0.0</td>
+      <td>36-301</td>
+      <td>47.0</td>
+      <td>54.361898</td>
+      <td>146.682258</td>
+    </tr>
+  </tbody>
+</table>
+            <h3>View clean reads fastQC report:</h3> <a href="html/Dataset_8_R1.trimmed_fastqc.html">Dataset_8_R1   </a> &emsp;&emsp;<a href="html/Dataset_8_R2.trimmed_fastqc.html">Dataset_8_R2   </a> &emsp;&emsp;<br /> <br><br>
+            <a href="html/trimmed_multiqc.html">All samples clean reads multiQC</a>
+            </article> 
+
+            <article id='numQC'>
+            <h1>Read numbers in each QC step</h1><table class="table table-striped" data-name="mytable">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Sample</th>
+      <th>RawReads</th>
+      <th>RawYield(Mbases)</th>
+      <th>Percent&gt;=Q30Bases</th>
+      <th>RawMeanQualityScore</th>
+      <th>RibosomalRNA</th>
+      <th>ReadsAfterRemoveDuplicates</th>
+      <th>ControlReads</th>
+      <th>ReadsAfterTrim</th>
+      <th>PossiblePathogenReads</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dataset_8</td>
+      <td>65177(F)|65177(R)</td>
+      <td>19(F)|19(R)</td>
+      <td>78.97(F)|52.37(R)</td>
+      <td>33.01(F)|26.57(R)</td>
+      <td>30.90%</td>
+      <td>90032 (69.07%)</td>
+      <td>0(F)|0(R)</td>
+      <td>72606 (55.70%)</td>
+      <td>57320 (43.97%)</td>
+    </tr>
+  </tbody>
+</table>
+            </article> 
+            
+            <article id='assemblyQC'>
+            <h1>Assembly QC</h1><table class="table table-striped" data-name="mytable">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Assembly</th>
+      <th># contigs (&gt;= 0 bp)</th>
+      <th># contigs (&gt;= 1000 bp)</th>
+      <th># contigs</th>
+      <th>Largest contig</th>
+      <th>Total length</th>
+      <th>GC (%)</th>
+      <th>N50</th>
+      <th>N75</th>
+      <th>L50</th>
+      <th>L75</th>
+      <th># N's per 100 kbp</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dataset_8</td>
+      <td>133</td>
+      <td>5</td>
+      <td>132</td>
+      <td>7714</td>
+      <td>72681</td>
+      <td>39.37</td>
+      <td>475</td>
+      <td>425</td>
+      <td>45</td>
+      <td>86</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+            <h3>View assembly QC quast report:</h3> <a href="html/Dataset_8.quast.html">Dataset_8   </a> &emsp;&emsp; <br><br>
+            <a href="html/quast_multiqc.html">All samples quast multiQC</a>
+            </article> 
+
+
+            <article id='kraken2'>
+            <h1>Kraken2 report</h1><table class="table table-striped" data-name="mytable">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Sample</th>
+      <th>PercentageOfMappedReads</th>
+      <th>NumberOfReads</th>
+      <th>TaxonId</th>
+      <th>Species</th>
+      <th>Domain</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dataset_8</td>
+      <td>9.24</td>
+      <td>3356</td>
+      <td>63459</td>
+      <td>Chenopodium quinoa</td>
+      <td>Eukaryota</td>
+    </tr>
+    <tr>
+      <td>Dataset_8</td>
+      <td>74.40</td>
+      <td>27011</td>
+      <td>35291</td>
+      <td>Pelargonium flower break virus</td>
+      <td>Viruses</td>
+    </tr>
+    <tr>
+      <td>Dataset_8</td>
+      <td>0.39</td>
+      <td>143</td>
+      <td>2185087</td>
+      <td>Chenopodium quinoa mitovirus 1</td>
+      <td>Viruses</td>
+    </tr>
+  </tbody>
+</table>
+            <h3>View Kraken2 krona report:</h3> <a href="html/Dataset_8.kraken2.report.html">Dataset_8   </a> &emsp;&emsp; 
+            </article> 
+
+            <article id='kaiju'>
+            <h1>Kaiju report</h1><table class="table table-striped" data-name="mytable">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Sample</th>
+      <th>PercentageOfMappedReads</th>
+      <th>NumberOfReads</th>
+      <th>TaxonId</th>
+      <th>Species</th>
+      <th>Domain</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dataset_8</td>
+      <td>74.269341</td>
+      <td>26962</td>
+      <td>35291</td>
+      <td>Pelargonium flower break virus</td>
+      <td>Viruses</td>
+    </tr>
+    <tr>
+      <td>Dataset_8</td>
+      <td>0.371870</td>
+      <td>135</td>
+      <td>2185087</td>
+      <td>Chenopodium quinoa mitovirus 1</td>
+      <td>Viruses</td>
+    </tr>
+  </tbody>
+</table>
+            <h3>View Kaiju krona report:</h3> <a href="html/Dataset_8.kaiju_krona.html">Dataset_8   </a> &emsp;&emsp; 
+            </article>
+            
+            <article id='kk_overlap'>
+            <h1>Pathogens detected by both Kraken2 and Kaiju:</h1> <table class="table table-striped" data-name="mytable">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Sample</th>
+      <th>NumberOfReads_Kraken</th>
+      <th>NumberOfReads_Kaiju</th>
+      <th>Species</th>
+      <th>Domain</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dataset_8</td>
+      <td>27011</td>
+      <td>26962</td>
+      <td>Pelargonium flower break virus</td>
+      <td>Viruses</td>
+    </tr>
+    <tr>
+      <td>Dataset_8</td>
+      <td>143</td>
+      <td>135</td>
+      <td>Chenopodium quinoa mitovirus 1</td>
+      <td>Viruses</td>
+    </tr>
+  </tbody>
+</table> 
+            </article>
+            
+            <article id='blastn'>
+            <!-- <h1>Blastn: contigs against NCBI viral references</h1><table class="table table-striped" data-name="mytable">
+  <thead>
+    <tr style="text-align: right;">
+      <th style="min-width: 200px;">Sample</th>
+      <th style="min-width: 200px;">Contig</th>
+      <th style="min-width: 200px;">Percent_identity</th>
+      <th style="min-width: 200px;">E-value</th>
+      <th style="min-width: 200px;">Reference_name</th>
+      <th style="min-width: 200px;">Species</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NODE_1_length_7714_cov_1139.211203</td>
+      <td>97.346</td>
+      <td>0.00e+00</td>
+      <td>NC_005286.1 Pelargonium flower break virus, complete genome</td>
+      <td>Pelargonium flower break virus</td>
+    </tr>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NODE_2_length_2692_cov_10.467512</td>
+      <td>99.736</td>
+      <td>0.00e+00</td>
+      <td>NC_040543.1 Chenopodium quinoa mitovirus 1 isolate Che1, complete genome</td>
+      <td>Chenopodium quinoa mitovirus 1</td>
+    </tr>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NODE_123_length_397_cov_0.950980</td>
+      <td>95.214</td>
+      <td>7.73e-179</td>
+      <td>NC_002815.2 Cactus virus X, complete genome</td>
+      <td>Cactus virus X</td>
+    </tr>
+  </tbody>
+</table> -->
+            <h1>View viral blastn krona report:</h1> <a href="html/Dataset_8.blastn.krona.html">Dataset_8   </a> &emsp;&emsp; 
+            </article>
+                
+            <article id='blastx'>
+            <!-- <h1>Blastx: contigs against Reference Viral Database (RVDB)</h1><table class="table table-striped" data-name="mytable">
+  <thead>
+    <tr style="text-align: right;">
+      <th style="min-width: 200px;">Sample</th>
+      <th style="min-width: 200px;">Contig</th>
+      <th style="min-width: 200px;">Percent_identity</th>
+      <th style="min-width: 200px;">E-value</th>
+      <th style="min-width: 200px;">Reference_name</th>
+      <th style="min-width: 200px;">Species</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NODE_1_length_7714_cov_1139.211203</td>
+      <td>97.5</td>
+      <td>0.00e+00</td>
+      <td>acc|GENBANK|ABB79925.1|NEIGHBOR|DQ256073|RNA-dependent RNA polymerase [Pelargonium flower break virus]</td>
+      <td>Pelargonium flower break virus</td>
+    </tr>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NODE_2_length_2692_cov_10.467512</td>
+      <td>98.3</td>
+      <td>0.00e+00</td>
+      <td>acc|GENBANK|QLK97559.1|GENBANK|MT089917|RNA-dependent RNA polymerase [Chenopodium quinoa mitovirus 1]</td>
+      <td>Chenopodium quinoa mitovirus 1</td>
+    </tr>
+  </tbody>
+</table> -->
+            <h1>View viral blastx krona report:</h1> <a href="html/Dataset_8.blastx.krona.html">Dataset_8   </a> &emsp;&emsp; 
+            </article>
+            <article id='selectContig'>               
+            <h1>Selected contigs and their annotation</h1><table class="table table-striped" data-name="mytable">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Sample</th>
+      <th>Contig</th>
+      <th>Percent_identity</th>
+      <th>Contig_length</th>
+      <th>Reference_length</th>
+      <th>RefCoverage</th>
+      <th>E-value</th>
+      <th>Reference_name</th>
+      <th>Species</th>
+      <th>blastType</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NODE_1_length_7714_cov_1139.211203</td>
+      <td>97.346</td>
+      <td>7714</td>
+      <td>3923</td>
+      <td>0.979607</td>
+      <td>0.00e+00</td>
+      <td>NC_005286.1 Pelargonium flower break virus, complete genome</td>
+      <td>Pelargonium flower break virus</td>
+      <td>Blastn</td>
+    </tr>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NODE_2_length_2692_cov_10.467512</td>
+      <td>99.736</td>
+      <td>2692</td>
+      <td>2730</td>
+      <td>0.969597</td>
+      <td>0.00e+00</td>
+      <td>NC_040543.1 Chenopodium quinoa mitovirus 1 isolate Che1, complete genome</td>
+      <td>Chenopodium quinoa mitovirus 1</td>
+      <td>Blastn</td>
+    </tr>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NODE_123_length_397_cov_0.950980</td>
+      <td>95.214</td>
+      <td>397</td>
+      <td>6614</td>
+      <td>0.060024</td>
+      <td>7.73e-179</td>
+      <td>NC_002815.2 Cactus virus X, complete genome</td>
+      <td>Cactus virus X</td>
+      <td>Blastn</td>
+    </tr>
+  </tbody>
+</table>
+            </article>
+            
+            <article id='mapping'>
+            <h1>Mapping reads to viral references</h1><table class="table table-striped" data-name="mytable">
+  <thead>
+    <tr style="text-align: right;">
+      <th style="min-width: 200px;">Sample</th>
+      <th style="min-width: 200px;">RefId</th>
+      <th style="min-width: 200px;">Species</th>
+      <th style="min-width: 200px;">Acronym</th>
+      <th style="min-width: 200px;">RefLen</th>
+      <th style="min-width: 200px;">MappedReads</th>
+      <th style="min-width: 200px;">RPKM</th>
+      <th style="min-width: 200px;">PercentMappedreads</th>
+      <th style="min-width: 200px;">PercentGenomeCovered</th>
+      <th style="min-width: 200px;">MeanCoverage</th>
+      <th style="min-width: 200px;">Taxonomy</th>
+      <th style="min-width: 200px;">RefTitle</th>
+      <th style="min-width: 200px;">MappingGraph</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NC_005286</td>
+      <td>Pelargonium flower break virus</td>
+      <td>PFBV</td>
+      <td>3923</td>
+      <td>57545</td>
+      <td>202030.42</td>
+      <td>79.26</td>
+      <td>99.85</td>
+      <td>2504.8</td>
+      <td>Viruses; Riboviria; Orthornavirae; Kitrinoviricota; Tolucaviricetes; Tolivirales; Tombusviridae; Procedovirinae; Alphacarmovirus; Pelargonium flower break virus;</td>
+      <td>NC_005286.1 Pelargonium flower break virus, complete genome</td>
+      <td><a href="image/Dataset_8.NC_005286.coverage.png" alt="Dataset_8 NC_005286 coverage graph" target="_blank">Dataset_8 NC_005286</a></td>
+    </tr>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NC_040543</td>
+      <td>Chenopodium quinoa mitovirus 1</td>
+      <td>nan</td>
+      <td>2730</td>
+      <td>2464</td>
+      <td>12430.99</td>
+      <td>3.39</td>
+      <td>96.96</td>
+      <td>31.2</td>
+      <td>Viruses; Riboviria; Orthornavirae; Lenarviricota; Howeltoviricetes; Cryppavirales; Mitoviridae; Mitovirus; unclassified Mitovirus; Chenopodium quinoa mitovirus 1;</td>
+      <td>NC_040543.1 Chenopodium quinoa mitovirus 1 isolate Che1, complete genome MF375475.1 Chenopodium quinoa mitovirus 1 isolate Che1, complete genome</td>
+      <td><a href="image/Dataset_8.NC_040543.coverage.png" alt="Dataset_8 NC_040543 coverage graph" target="_blank">Dataset_8 NC_040543</a></td>
+    </tr>
+    <tr>
+      <td>Dataset_8</td>
+      <td>NC_002815</td>
+      <td>Cactus virus X</td>
+      <td>CVX</td>
+      <td>6614</td>
+      <td>415</td>
+      <td>864.19</td>
+      <td>0.57</td>
+      <td>35.64</td>
+      <td>1.1</td>
+      <td>Viruses; Riboviria; Orthornavirae; Kitrinoviricota; Alsuviricetes; Tymovirales; Alphaflexiviridae; Potexvirus; Cactus virus X;</td>
+      <td>NC_002815.2 Cactus virus X, complete genome</td>
+      <td><a href="image/Dataset_8.NC_002815.coverage.png" alt="Dataset_8 NC_002815 coverage graph" target="_blank">Dataset_8 NC_002815</a></td>
+    </tr>
+  </tbody>
+</table>
+            <!--
+            <h3>View reads mapping to reference graph:</h3> <a href="image/Dataset_8.NC_005286.coverage.png" alt="Dataset_8 NC_005286 coverage graph" target="_blank">Dataset_8 NC_005286</a><br /><a href="image/Dataset_8.NC_040543.coverage.png" alt="Dataset_8 NC_040543 coverage graph" target="_blank">Dataset_8 NC_040543</a><br /><a href="image/Dataset_8.NC_002815.coverage.png" alt="Dataset_8 NC_002815 coverage graph" target="_blank">Dataset_8 NC_002815</a> 
+            -->
+            </article>
+
+            
+            <article id='novel'>
+            <h1>Mapping reads to novel contigs</h1>
+            <h3>No novel contigs</h3> </article>
+            </div>
+    </body>
+</html>

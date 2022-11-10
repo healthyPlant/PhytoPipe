@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 ######################################################################
 #Alex Hu <xiaojun.hu@usda.gov>
-#Updated: 02/18/2021
+#Updated: 11/10/2022
 #This program generate a html report, which includes FastQC, multiQC, Kraken2, Kaiju, blastn, blastx
 #Usage: python getHtmlReport.py [working directory] [monitor pathogen file] [report] [output file]
 ######################################################################
@@ -22,8 +22,6 @@ mpFile = sys.argv[2] #monitor pathogens
 rptdir = sys.argv[3] #workdir + '/report'
 rptFile = sys.argv[4] #workdir + '/report/report.txt'
 outFile = sys.argv[5] #workdir + '/report/report.html'
-
-#rptFile = rptdir + '/report.txt'
 
 #blast threshold to display
 blastnThreshold = 1e-100 #evalue
@@ -186,7 +184,6 @@ def extractKaiju(kjFile, mpFile):
             else:
                 continue
             if species != 'None':
-                #kjReport.append([cells[1],cells[2],cells[3],species, domain, cells[4]])
                 kjReport.append([cells[1],cells[2],cells[3],species, domain])
     return kjReport
 
@@ -196,7 +193,6 @@ def extractKaiju(kjFile, mpFile):
 rawqcFile = workdir + '/qc/multiqc/raw_multiqc_data/multiqc_fastqc.txt'
 df = pd.read_csv(rawqcFile, sep='\t')
 df1 = df.iloc[:,[0,4,5,6,7,8,9]].copy()
-#df1.loc[:,'Sample'] = df1.iloc[:,0].str.replace('_R1_001', '', regex=False) #remove _R1_001 in the sample name
 rawQC = df1.to_html(index=False).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
 #get rawQC sample name
 rawQCsample = df['Sample'].copy()
@@ -211,15 +207,11 @@ samples = df['Sample'].copy()
 cleanqcFile = workdir + '/qc/multiqc/trimmed_multiqc_data/multiqc_fastqc.txt'
 df = pd.read_csv(cleanqcFile, sep='\t')
 df2 = df.iloc[:,[0,4,5,6,7,8,9]]
-#df2.iloc[:,0].str.replace('_R1_001', '', regex=False)
 cleanQC = df2.to_html(index=False).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
 #get cleanQC sample name
 cleanQCsample = df['Sample'].copy()
 
 #5. assembly QC
-#samples = df1['Sample'].copy()
-#samples = list(map(lambda st: str.replace(st, '_R1_001', ''), samples)) 
-#print(samples)
 #put single quast togther
 
 quastFile = workdir + '/qc/quast/' + samples[0] + '.quast/transposed_report.tsv'
@@ -231,7 +223,6 @@ for sample in samples[1:]:
     df1.loc[0,'Assembly'] = sample
     df = df.append(df1, sort = False)
 df3 = df.iloc[:,[0,1,2,13,14,15,16,17,18,19,20,21]] 
-#df1['Assembly'] = samples   
 assemblyQC = df3.to_html(index=False).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
 
 #6. Kraken2 report
@@ -245,25 +236,13 @@ for sample in samples:
         kReport.append(rpt)
     #print(kReport)
 #By default the keys of the dict become the DataFrame columns, Specify orient='index' to create the DataFrame using dictionary keys as rows:    
-#df4 = pd.DataFrame.from_dict(kDict, orient='index')
 df4 = pd.DataFrame(kReport, columns =['Sample', 'PercentageOfMappedReads', 'NumberOfReads', "TaxonId", 'Species', 'Domain']) 
-#print(df4)
 kraken2 = df4.to_html(index=False).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
 
 #7. Kaiju report
 kjReport = []
 for sample in samples:
     kjFile = workdir + '/classification/' + sample + '.kaiju.table.txt'
-    #with open(kjFile) as f:
-    #    f.readline() #skip header
-    #    for line in f:  
-    #        line = line.rstrip()
-    #        cells = line.split("\t")
-    #        if 'Viruses' in cells[4] and float(cells[2]) >= threshold and cells[4] != 'unclassified' and '(non-viral)' not in cells[4] :
-    #            kjReport.append([sample, cells[1],cells[2],cells[3],cells[4]])
-    #        elif('Viruses' not in cells[4] and 'NA' not in cells[3] and float(cells[2]) >= 1000):
-    #            kjReport.append([sample, cells[1],cells[2],cells[3],cells[4]])
-
     report = extractKaiju(kjFile, mpFile)
     for rpt in report:
         rpt.insert(0,sample)  #add it at the first position
@@ -272,11 +251,9 @@ for sample in samples:
     #print(kjReport)
 
 df5 = pd.DataFrame(kjReport, columns =['Sample', 'PercentageOfMappedReads', 'NumberOfReads', 'TaxonId','Species', 'Domain'])  #'TaxonName'
-#print(df5)
 kaiju = df5.to_html(index=False).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
 
 #8. Blastn
-
 #remove empty files
 blastnFiles = []
 blastn = ""
@@ -291,20 +268,17 @@ for sample in samples:
 if len(blastnFiles) > 0:
     df = pd.read_csv(blastnFiles[0], sep='\t',header=None)
     df.columns = ['Contig', 'Reference', 'Percent_identity', 'Alignment_length', 'Contig_length', 'Reference_length', 'Align_contig_start', 'Align_contig_end', 'Align_ref_start', 'Align_ref_end', 'E-value', 'Bitscore', 'Reference_name', 'Taxonomy_id', 'Species', 'Taxonomy_path']
-    #print(df.dtypes)
     df.insert(loc=0, column='Sample', value=bsamples[0])  #add sample name at column one
     for i in range(1, len(blastnFiles)):
         df0 = pd.read_csv(blastnFiles[i], sep='\t',header=None)
         df0.columns = ['Contig', 'Reference', 'Percent_identity', 'Alignment_length', 'Contig_length', 'Reference_length', 'Align_contig_start', 'Align_contig_end', 'Align_ref_start', 'Align_ref_end', 'E-value', 'Bitscore', 'Reference_name', 'Taxonomy_id', 'Species', 'Taxonomy_path']
         df0.insert(loc=0, column='Sample', value=bsamples[i])
-        #print(blastnFiles[i])
         df = df.append(df0, ignore_index = True)
-        #print(df.shape[0])
+
     #display viruses and virod using different criteria
     df = df[(df['E-value'] <= blastnThreshold) | ((df['E-value'] <= 1e-30) & (df['Species'].str.contains("viroid")) )]
     df6 = df.iloc[:,[0,1,3,11,13,15]].copy()
     df6['E-value'] = df6['E-value'].map('{:,.2e}'.format)  #format scitific     
-    #print(df6.head())
     blastn = df6.to_html(index=False, col_space=200).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
 
 #9. Blastx
@@ -323,22 +297,16 @@ if len(blastxFiles) > 0:
     df = pd.read_csv(blastxFiles[0], sep='\t', header=None)
     df.columns = ['Contig', 'Reference', 'Percent_identity', 'Alignment_length', 'Contig_length', 'Reference_length', 'Align_contig_start', 'Align_contig_end', 'Align_ref_start', 'Align_ref_end', 'E-value', 'Bitscore', 'Reference_name', 'Taxonomy_id', 'Species', 'Taxonomy_path']
     df = df[df.iloc[:,15].str.contains('virus',na=False)] #select only virus
-    #df1 = df[df.iloc[:,10] <= threshold]
     df.insert(loc=0, column='Sample', value=bsamples[0])  #add sample name at column one
-    #df7 = df1.iloc[:,[0,1,3,11,13,15]]
     for i in range(1,len(blastxFiles)):
         df0 = pd.read_csv(blastxFiles[i], sep='\t', header=None)
         df0.columns = ['Contig', 'Reference', 'Percent_identity', 'Alignment_length', 'Contig_length', 'Reference_length', 'Align_contig_start', 'Align_contig_end', 'Align_ref_start', 'Align_ref_end', 'E-value', 'Bitscore', 'Reference_name', 'Taxonomy_id', 'Species', 'Taxonomy_path']
         df0 = df0[df0.iloc[:,15].str.contains('virus',na=False)] #select only virus
-        #df1 = df[df.iloc[:,10] <= threshold]
         df0.insert(loc=0, column='Sample', value=bsamples[i])
-        #df1 = df1.iloc[:,[0,1,3,11,13,15]]
-        #print(df1.head())
         df= df.append(df0, sort = False)
     df = df[df['E-value'] <= blastxThreshold]
     df7 = df.iloc[:,[0,1,3,11,13,15]].copy()
     df7['E-value'] = df7['E-value'].map('{:,.2e}'.format)  #format scitific     
-    #print(df6.head())
     blastx = df7.to_html(index=False, col_space=200).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
 
 #10. Selected contigs
@@ -347,10 +315,10 @@ df = pd.read_csv(selectFile, sep='\t', header = 0)
 df.insert(loc=0, column='Sample', value=samples[0])  #add sample name at column one
 for sample in samples[1:]:
     selectFile = workdir + '/annotation/' + sample + '.selectedRef.txt'
-    #print(selectFile)
     df1 = pd.read_csv(selectFile, sep='\t', header = 0)
     df1.insert(loc=0, column='Sample', value=sample)  #add sample name at column one
     df = pd.concat([df, df1], axis=0) # Stack the DataFrames on top of each other
+
 #calculate genome/reference coverage
 coverage = df.iloc[:,4]/df.iloc[:,6] 
 df8 = df.iloc[:,[0,1,3,5,6,11,13,15,17]].copy()
@@ -359,15 +327,10 @@ df8.insert(loc=5, column='RefCoverage', value=coverage)  #add sample name at col
 selectContig = df8.to_html(index=False).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
 
 #11. mapping reads to reference information
-#rptFile = workdir + '/report/report.txt'
 df = pd.read_csv(rptFile, sep='\t', header = 0, index_col=False, na_filter = False)
 #print(df.head())
-#df9 = df.iloc[:,[0,15,17,19,21,22,23,24,25,26,18,20]].copy()
 df9 = df[["Sample","RefId","Species","Acronym","RefLen","MappedReads","RPKM","PercentMappedreads","PercentGenomeCovered","MeanCoverage","Taxonomy","RefTitle"]]
-#col1 = df9.iloc[:,0].str.split('_', n=1, expand = True) #remove date from seqId
-#df9.iloc[:,0] = col1[1]
-#df9.rename(columns={'SeqID':'Sample'}, inplace=True) #change a column name
-#print(df9.head())
+
 #Add image html links to the table
 df9c = df9.copy()  #ro prevent SettingWithCopyWarning
 df9c['MappingGraph'] = "<a href=\"image/" + df9['Sample'] + "." + df9['RefId'] + ".coverage.png\" alt=\"" + df9['Sample'] + " " + df9['RefId'] + " coverage graph\" target=\"_blank\">" + df9['Sample'] + " " + df9['RefId'] +"</a>"
@@ -381,10 +344,7 @@ df9c['MappingGraph'] = "<a href=\"image/" + df9['Sample'] + "." + df9['RefId'] +
        
 map2Ref = df9c.to_html(index=False, escape=False, col_space=200).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
 
-#df10 = df.iloc[:,[1,8,15,17,27,28,29,30,31]].copy()
-#df10 = df[["Sample","RefId","Species","BlastType","BlastQueryCover","BlastEvalue","BlastIdentity","BlastDescription"]]
 df10 = df[["Sample","RefId","Species","BlastType","BlastEvalue","BlastIdentity","BlastDescription"]]
-#df10['BlastEvalue'] = df10['BlastEvalue'].map('{:,.2e}'.format)  #format scitific
 ncbiBlast = df10.to_html(index=False).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
 
 #generate a fasta file for consensus (ref consensus or contig consensus)
@@ -392,12 +352,11 @@ ncbiBlast = df10.to_html(index=False).replace('<table border="1" class="datafram
 def makeFasta(sample, ref, abbr, seq):
     fasta = ""
     if not pd.isna(ref):   #ref != 'nan' is always true, use pd to check nan
-        #print(sample, abbr , ref, seq )
         fasta = ">" + sample + "." + str(abbr) + "." + str(ref) + "\n" + str(seq)
     return fasta
 
 result = [makeFasta(col[0], col[1], col[2], col[3]) for col in df[['Sample', 'RefId', 'Acronym','Sequence']].values]
-#print(result)
+
 #output final assemblies
 outfile = rptdir + '/finalConsensus.txt'
 fout = open(outfile, 'w')
@@ -412,11 +371,8 @@ map2Contig = ""
 df11 = pd.DataFrame()
 if os.path.exists(mapFile) and os.stat(mapFile).st_size != 0:
     df11 = pd.read_csv(mapFile, sep='\t')
-    #print(df11.head())
     #add ref annotation
     df_temp = df10.iloc[:,[2,3]].copy().drop_duplicates() #RefId, Species; drop_duplicates() function removes all the duplicate rows and returns only unique rows.
-    #df_temp['RefId'] = df_temp['RefId'] + ".contig"
-    #df11 = pd.merge(df11, df_temp, on='RefId', how='left')
     df11['MappingGraph'] = "<a href=\"image/" + df11['Sample'] + "." + df11['RefId'] + ".coverage.png\" alt=\"" + df11['Sample'] + " " + df11['RefId'] + " coverage graph\" target=\"_blank\">" + df11['Sample'] + " " + df11['RefId'] +"</a>"
     map2Contig = df11.to_html(index=False, escape=False).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
 
@@ -469,8 +425,6 @@ blastntReport = ""
 blastnrReport = ""
 count=0
 for sample in samples:
-    #rawFastQC += "<a href=\"html/" + sample + "_fastqc.html\">" + sample + "   </a> " 
-    #trimFastQC += "<a href=\"html/" + sample + ".trimmed_fastqc.html\">" + sample + "   </a> " 
     quastQC += "<a href=\"html/" + sample + ".quast.html\">" + sample + "   </a> &emsp;&emsp;" 
     krakenReport += "<a href=\"html/" + sample + ".kraken2.report.html\">" + sample + "   </a> &emsp;&emsp;"
     kaijuReport += "<a href=\"html/" + sample + ".kaiju_krona.html\">" + sample + "   </a> &emsp;&emsp;"
@@ -488,8 +442,6 @@ for sample in samples:
 
     count += 1
     if count%2 == 0:
-        #rawFastQC += "<br />" #add break
-        #trimFastQC += "<br />"
         quastQC += "<br />"
         krakenReport += "<br />"
         kaijuReport += "<br />"
@@ -578,12 +530,10 @@ if os.path.exists(source_dir):
 
 
 #get kraken2 and kaiju overlapped viruses
-#df4 = pd.DataFrame(kReport, columns =['Sample', 'PercentageOfMappedReads', 'NumberOfReads', "TaxonId", 'Species', 'Domain']) 
-#df5 = pd.DataFrame(kjReport, columns =['Sample', 'PercentageOfMappedReads', 'NumberOfReads', 'TaxonId','TaxonName']) 
 df4['Sample_taxon'] = df4.Sample.str.cat(df4.TaxonId.astype(str), sep='_')
 df5['Sample_taxon'] = df5.Sample.str.cat(df5.TaxonId.astype(str), sep='_')
 kk_overlap = pd.merge(df4, df5, how='inner', on=['Sample_taxon'])
-#print(kk_overlap.head())
+
 kk_overlap1 = kk_overlap[['Sample_x','NumberOfReads_x', 'NumberOfReads_y','Species_x','Domain_x']] #'TaxonName'
 # Change the column names 
 kk_overlap1.columns =['Sample','NumberOfReads_Kraken', 'NumberOfReads_Kaiju','Species','Domain'] #,'TaxonName'
@@ -796,7 +746,6 @@ html_string += '''<article id='selectContig'>
             '''
 
 if contigLinkStr: #skip no novel contigs
-    #html_string += map2Contig + ''' <h3>View reads mapping to assembly graph:</h3> ''' + contigLinkStr
     html_string += map2Contig
 else:
     html_string += '''<h3>No novel contigs</h3> '''

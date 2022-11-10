@@ -14,8 +14,6 @@ control = config["control"]
 input_format = config["input_format"]
 rRNA_db = config["euk_rRNA"]
 seq_type = config["seq_type"]
-strand1 = config["strand1"]
-strand2 = config["strand2"]
 clumpify_param = config["clumpify_param"]
 trimmomatic_param = config["trimmomatic_param"]
 smps = config["samples"]
@@ -33,13 +31,19 @@ for rawFile in rawFiles:
 ruleorder: remove_control_pe > remove_control_se 
 ruleorder: remove_duplicate_pe > remove_duplicate_se
 ruleorder: trimmomatic_pe > trimmomatic_se
-ruleorder: trim_fastqc_se > trim_fastqc_pe
+ruleorder: trim_fastqc_pe > trim_fastqc_se
 ruleorder: raw_fastqc_pe > raw_fastqc_se
-ruleorder: check_rRNA_se > check_rRNA_pe
+ruleorder: check_rRNA_pe > check_rRNA_se
+
+#to prevent snakemake from interpreting wildcard strings as regular expressions. For this, escape each wildcard value using wildcard_constraints.
+wildcard_constraints:
+    sample= '|'.join([re.escape(x) for x in smps]) #add escape (\) before special character and join sample names using "|"
 
 # Define input files
 def raw_inputs(wildcards): 
+    strand1 = config["strand1"]
     if (seq_type == "pe"):
+      strand2 = config["strand2"]
       if true001:
         return expand(rawReadDir + "/{sample}_{strand}_001." + input_format, strand=[strand1,strand2], sample=wildcards.sample) 
       else:  
@@ -74,6 +78,8 @@ def fastqc_raw_inputs(wildcards):
 
 # Define raw multiQC input files
 def raw_multiqc_inputs(wildcards):
+    strand1 = config["strand1"]
+    strand2 = config["strand2"]
     seq_type = config["seq_type"]
     if (seq_type == "pe"):
         qcOut = expand(qcDir + "/raw_fastqc/{sample}_{strand}_fastqc.zip", strand=[strand1,strand2], sample=smps)
@@ -87,7 +93,7 @@ def raw_multiqc_inputs(wildcards):
 def trimmed_multiqc_inputs(wildcards):
     seq_type = config["seq_type"]
     if (seq_type == "pe"):
-        qcOut = expand(qcDir + "/trimmed_fastqc/{sample}_{strand}.trimmed_fastqc.zip", strand=[strand1,strand2], sample=smps)
+        qcOut = expand(qcDir + "/trimmed_fastqc/{sample}_{strand}.trimmed_fastqc.zip", strand=['R1','R2'], sample=smps)
     elif (seq_type == "se"):
         qcOut = expand(rules.trim_fastqc_se.output, sample=smps) #ensure the rule can only be started after fastqc processes all samples
     else:
@@ -109,16 +115,18 @@ rule raw_fastqc_se:
     log:
       logDir + "/raw_fastqc/{sample}.log"
     threads: 4
+    params: 
+      strand1 = config["strand1"]
     shell:
       """
       fastqc -t {threads} --quiet --outdir {qcDir}/raw_fastqc {input} >> {log} 2>&1
-      if [[ -s qc/raw_fastqc/{wildcards.sample}_{strand1}_001_fastqc.html ]]; then
-        mv qc/raw_fastqc/{wildcards.sample}_{strand1}_001_fastqc.html  {output.html}  #rename output file to fit multiQC input
-        mv qc/raw_fastqc/{wildcards.sample}_{strand1}_001_fastqc.zip  {output.zip}
+      if [[ -s qc/raw_fastqc/{wildcards.sample}_{params.strand1}_001_fastqc.html ]]; then
+        mv qc/raw_fastqc/{wildcards.sample}_{params.strand1}_001_fastqc.html  {output.html}  #rename output file to fit multiQC input
+        mv qc/raw_fastqc/{wildcards.sample}_{params.strand1}_001_fastqc.zip  {output.zip}
       fi
-      if [[ -s qc/raw_fastqc/{wildcards.sample}_{strand1}_fastqc.html ]]; then
-        mv qc/raw_fastqc/{wildcards.sample}_{strand1}_fastqc.html  {output.html}  #rename output file to fit multiQC input
-        mv qc/raw_fastqc/{wildcards.sample}_{strand1}_fastqc.zip  {output.zip}
+      if [[ -s qc/raw_fastqc/{wildcards.sample}_{params.strand1}_fastqc.html ]]; then
+        mv qc/raw_fastqc/{wildcards.sample}_{params.strand1}_fastqc.html  {output.html}  #rename output file to fit multiQC input
+        mv qc/raw_fastqc/{wildcards.sample}_{params.strand1}_fastqc.zip  {output.zip}
       fi
       """
 
@@ -178,10 +186,10 @@ rule check_rRNA_pe:
       reads = raw_inputs
     output:
       log = logDir + "/rRNA_qc/{sample}.log",
-      filtRNA1 = temp(trimDir + "/{sample}" + "_" + strand1 + ".filtRNA.fastq.gz"),
-      rRNA1 = temp(trimDir + "/{sample}" + "_" + strand1 + ".ribo.fastq.gz"), 
-      filtRNA2 = temp(trimDir + "/{sample}" + "_" + strand2 + ".filtRNA.fastq.gz"),
-      rRNA2 = temp(trimDir + "/{sample}" + "_" + strand2 + ".ribo.fastq.gz")
+      filtRNA1 = temp(trimDir + "/{sample}" + "_R1.filtRNA.fastq.gz"),
+      rRNA1 = temp(trimDir + "/{sample}" + "_R1.ribo.fastq.gz"), 
+      filtRNA2 = temp(trimDir + "/{sample}" + "_R2.filtRNA.fastq.gz"),
+      rRNA2 = temp(trimDir + "/{sample}" + "_R2.ribo.fastq.gz")
     message:
       '''--- {wildcards.sample} ribosomal RNAs check with bbduk.sh.'''
     threads:
@@ -213,7 +221,6 @@ rule remove_duplicate_se:
       threads = config.get("number_of_threads", 1)
     params:
       param = clumpify_param  
-      #"dedupe=t subs=0 passes=2 " #dupedist=40 optical=t# These parameters identify reads as duplicated only if they are an exact match (i.e., no substitution allowed).
     group: "rmDup"
     shell:
       """
@@ -225,11 +232,11 @@ rule remove_duplicate_pe:
     Remove (PCR)-duplicated paired-end reads using clumpify.sh in BBMap
     """
     input:
-      read1 = trimDir + "/{sample}" + "_" + strand1 + ".filtRNA.fastq.gz",
-      read2 = trimDir + "/{sample}" + "_" + strand2 + ".filtRNA.fastq.gz"
+      read1 = trimDir + "/{sample}" + "_R1.filtRNA.fastq.gz",
+      read2 = trimDir + "/{sample}" + "_R2.filtRNA.fastq.gz"
     output:
-      rmdup1 = temp(trimDir + "/{sample}" + "_" + strand1 + ".rmdup.fastq.gz"),
-      rmdup2 = temp(trimDir + "/{sample}" + "_" + strand2 + ".rmdup.fastq.gz")
+      rmdup1 = temp(trimDir + "/{sample}" + "_R1.rmdup.fastq.gz"),
+      rmdup2 = temp(trimDir + "/{sample}" + "_R2.rmdup.fastq.gz")
     message:
       '''--- Remove {wildcards.sample} duplicate reads with clumpify.'''
     log:
@@ -271,11 +278,11 @@ rule remove_control_pe:
     Remove Illimina control ex. PhiX174, treated as a control
     """
     input:
-      read1 = trimDir + "/{sample}" + "_" + strand1 + ".rmdup.fastq.gz",
-      read2 = trimDir + "/{sample}" + "_" + strand2 + ".rmdup.fastq.gz"
+      read1 = trimDir + "/{sample}" + "_R1.rmdup.fastq.gz",
+      read2 = trimDir + "/{sample}" + "_R2.rmdup.fastq.gz"
     output:
-      cleaned1 = temp(trimDir + "/{sample}" + "_" + strand1 + ".rmdup_ctm.fastq.gz"),
-      cleaned2 = temp(trimDir + "/{sample}" + "_" + strand2 + ".rmdup_ctm.fastq.gz"),
+      cleaned1 = temp(trimDir + "/{sample}" + "_R1.rmdup_ctm.fastq.gz"),
+      cleaned2 = temp(trimDir + "/{sample}" + "_R2.rmdup_ctm.fastq.gz"),
       removed = temp(trimDir + "/{sample}.ctm.fastq") #if you want keep control reads, remove temp() 
     message:
       '''--- Remove {wildcards.sample} control ex. PhiX174 with bbsplit.'''
@@ -309,26 +316,24 @@ rule trimmomatic_se:
     params: 
       trimmer= trimmomatic_param,
       adapters = adapters
-      #trimmer=["ILLUMINACLIP:{}:2:30:10".format(adapters), "LEADING:3", "TRAILING:3", "SLIDINGWINDOW:4:20", "MINLEN:36"],
     threads: 4
     shell:
       """
       java -jar {trimmomatic} SE -threads {threads} -phred33 {input} {output} ILLUMINACLIP:{params.adapters}:2:30:10 {params.trimmer} 2> {log}
       """
-      #&>> appends STDOUT and STDERR to the same file. You might benefit from not mixing stuff up and piping 2>file.err 1>file.out;  written to stderr, not stdout, so you can redirect those logs to a file as below:command 2> log.txt
 
 rule trimmomatic_pe:
     """
     Trim adaptors and low quality reads by Trimmomatic
     """
     input:
-      read1 = trimDir + "/{sample}" + "_" + strand1 + ".rmdup_ctm.fastq.gz",
-      read2 = trimDir + "/{sample}" + "_" + strand2 + ".rmdup_ctm.fastq.gz",
+      read1 = trimDir + "/{sample}" + "_R1.rmdup_ctm.fastq.gz",
+      read2 = trimDir + "/{sample}" + "_R2.rmdup_ctm.fastq.gz",
     output:
-      trimmed1 = trimDir + "/{sample}" + "_" + strand1 + ".trimmed.fastq.gz",
-      trimmed2 = trimDir + "/{sample}" + "_" + strand2 + ".trimmed.fastq.gz",
-      unpaired1 = trimDir + "/{sample}" + "_" + strand1 + ".unpaired.fastq.gz",
-      unpaired2 = trimDir + "/{sample}" + "_" + strand2 + ".unpaired.fastq.gz",
+      trimmed1 = trimDir + "/{sample}" + "_R1.trimmed.fastq.gz",
+      trimmed2 = trimDir + "/{sample}" + "_R2.trimmed.fastq.gz",
+      unpaired1 = trimDir + "/{sample}" + "_R1.unpaired.fastq.gz",
+      unpaired2 = trimDir + "/{sample}" + "_R2.unpaired.fastq.gz",
     message:
       '''--- Trim {wildcards.sample} reads with trimmomatic.'''
     log:
@@ -338,7 +343,6 @@ rule trimmomatic_pe:
     params: 
       trimmer= trimmomatic_param, 
       adapters = adapters
-      #trimmer=["ILLUMINACLIP:{}:2:30:10".format(adapters), "LEADING:3", "TRAILING:3", "SLIDINGWINDOW:4:20", "MINLEN:36"],
     threads: 4
     shell:
       """

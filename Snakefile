@@ -143,19 +143,19 @@ if (seq_type == "se"):
 # Paired-ends
 elif (seq_type == "pe"):
     #QC raw reads
-    rawFastQC = expand(qcDir + "/raw_fastqc/{sample}_{strand}_fastqc.zip", sample=SAMPLES, strand=STRANDS)
+    rawFastQC = expand(qcDir + "/raw_fastqc/{sample}_{strand}_fastqc.zip", sample=SAMPLES, strand=STRANDS),
     #check host ribosomal RNA
-    rRNACheck = expand(trimDir + "/{sample}_" + strand2 + ".filtRNA.fastq.gz", sample=SAMPLES)
-	#remove duplicate reads	
-    rmDup = expand(trimDir + "/{sample}_{strand}.rmdup.fastq.gz",sample=SAMPLES, strand=STRANDS)
+    rRNACheck = expand(trimDir + "/{sample}_R2.filtRNA.fastq.gz", sample=SAMPLES),
+    #remove duplicate reads	
+    rmDup = expand(trimDir + "/{sample}_R2.rmdup.fastq.gz",sample=SAMPLES), #strand=STRANDS)
     #remove PhiX174 contaminant
-    rmCtm = expand(trimDir + "/{sample}_{strand}.rmdup_ctm.fastq.gz", sample=SAMPLES, strand=STRANDS) #run clumpify to remove duplicate reads
+    rmCtm = expand(trimDir + "/{sample}_R2.rmdup_ctm.fastq.gz", sample=SAMPLES) #, strand=STRANDS), #run clumpify to remove duplicate reads
     #Trim reads
-    trim = expand(trimDir + "/{sample}_{strand}.trimmed.fastq.gz", sample=SAMPLES, strand=STRANDS), #run trimmomatic 
-	#QC trimmed reads
-    trimmedFastQC = expand(qcDir + "/trimmed_fastqc/{sample}_{strand}.trimmed_fastqc.zip", sample=SAMPLES, strand=STRANDS), #run fastqc for trimmed reads
+    trim = expand(trimDir + "/{sample}_R2.trimmed.fastq.gz", sample=SAMPLES) #, strand=STRANDS), #run trimmomatic 
+    #QC trimmed reads
+    trimmedFastQC = expand(qcDir + "/trimmed_fastqc/{sample}_{strand}.trimmed_fastqc.zip", sample=SAMPLES, strand=['R1','R2']), #STRANDS), #run fastqc for trimmed reads
     #extract pathogen reads
-    extractPathRead = expand(cleanDir + "/{sample}_{strand}.pathogen.fastq.gz", sample=SAMPLES, strand=STRANDS),
+    extractPathRead = expand(cleanDir + "/{sample}_R2.pathogen.fastq.gz", sample=SAMPLES), #strand=STRANDS),
 
 else:
     sys.exit("Error: invalid 'seq_type parameter'. Must be 'se' or 'pe'")
