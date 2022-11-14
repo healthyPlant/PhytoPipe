@@ -89,7 +89,7 @@ You can view progress or errors in the file 'nohup.out'
 `more nohup.out`
 
 ### PhytoPipe quick test
-After software and databases are ready, you run a quick test using the data in the test/data folder. The steps can be found in [test notebook](test/quick_test.ipynb).  
+After software and databases are ready, you can run a quick test using the data in the test/data folder. The steps can be found in [test notebook](test/quick_test.ipynb).  
 
 # Documentation
 
