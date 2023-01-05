@@ -1,4 +1,28 @@
-TaxonId	Species
+TaxonId	TaxonName
+37692	Candidatus Phytoplasma mali
+135727	Candidatus Phytoplasma ziziphi
+69896	Candidatus Phytoplasma solani
+59748	Candidatus Phytoplasma australiense
+85624 	16SrIV (Coconut lethal yellows group)
+198422 	Candidatus Phytoplasma phoenicium
+47565 	Candidatus Phytoplasma prunorum
+131152 	Candidatus Phytoplasma vitis
+305 	Ralstonia solanacearum
+64187 	Xanthomonas oryzae pv. oryzae
+129394 	Xanthomonas oryzae pv. oryzicola
+286115 	Synchytrium endobioticum 
+33189 	Cronartium flaccidum
+61366 	Fusarium oxysporum f. sp. cubense
+318829 	Pyricularia oryzae
+80373 	Magnaporthiopsis maydis
+886948 	Peronosclerospora philippinensis
+299391 	Phytophthora alni 
+325452 	Phytophthora kernoviae
+12211 	Plum pox virus
+12892 	Potato spindle tuber viroid
+12235 	Cucumber green mottle mosaic virus
+1761477 	Tomato brown rugose fruit virus
+198612 	Groundnut bud necrosis virus
 12175	Apple chlorotic leaf spot virus
 1211388	Apple green crinkle associated virus
 1737346	Apple hammerhead viroid-like circular RNA
@@ -10,7 +34,3 @@ TaxonId	Species
 75387	Apricot latent virus
 351426	Asian prunus virus 2
 351428	Asian prunus virus 3
-37692	Candidatus Phytoplasma mali
-135727	Candidatus Phytoplasma ziziphi
-69896	Candidatus Phytoplasma solani
-59748	Candidatus Phytoplasma australiense
