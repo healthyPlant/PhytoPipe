@@ -46,6 +46,9 @@ acronymDb: /path/to/PhytoPipe/db/ICTV_virus_acronym.txt
 #each line have a specices taxonomy ID and name
 monitorPathogen: /path/to/PhytoPipe/db/monitorPathogen.txt
 
+#microbial taxon ids
+microbialTaxon: /my/databases/ncbi/microbial.tids
+
 #Blast databases
 #'virus' is for blasting against RVDB and viral references.
 #'all' is for blasting NCBI nt and nr. It could take a long time to finish blastn
