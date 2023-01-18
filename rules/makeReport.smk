@@ -42,7 +42,7 @@ rule blastn_local:
     log:
 	    logDir + "/annotate/{sample}.finalConsensus.blastn.log"
     params:
-	    blastn = " -word_size 11 -max_target_seqs 1 -evalue " + blastEvalue + " -outfmt \"6 qseqid sseqid pident length qlen slen qstart qend sstart send evalue bitscore stitle qcovs \" ", #qcovs:Query Coverage Per Subject
+	    blastn = " -word_size 11 -max_target_seqs 1 -evalue 1e-100 -outfmt \"6 qseqid sseqid pident length qlen slen qstart qend sstart send evalue bitscore stitle qcovs \" ", #qcovs:Query Coverage Per Subject
 	    blastx = " --max-target-seqs 1 -e  " + blastEvalue + "  --outfmt 6 qseqid sseqid pident length qlen slen qstart qend sstart send evalue bitscore stitle scovhsp ", #scovhsp:Subject Coverage Per HSP*
 	    blastnFailed = reportDir + "/{sample}.consensus.blastn.failed.fasta",
 	    blastxResult = reportDir + "/{sample}.consensus.blastx.txt",

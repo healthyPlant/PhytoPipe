@@ -42,8 +42,13 @@ def parseJson(jsonFile):
             for read in sample['ReadMetrics']: # a list of dict
                 yieldQ30 += read['YieldQ30']
                 qualityScoreSum += read['QualityScoreSum']
-            avgQual = float(qualityScoreSum/sample['Yield'])
-            q30Percent = float(yieldQ30/sample['Yield'] * 100)
+            if sample['Yield'] != 0:
+                avgQual = float(qualityScoreSum/sample['Yield'])
+                q30Percent = float(yieldQ30/sample['Yield'] * 100)
+            else:
+                avgQual = 0
+                q30Percent = 0
+
             qualDict.setdefault(sample['SampleName'],[]).append([sample['NumberReads'], sample['Yield'],q30Percent, avgQual])
                 
     #there are several lanes , get total yield and average qualily for a sample
