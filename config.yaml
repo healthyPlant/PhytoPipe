@@ -47,7 +47,7 @@ acronymDb: /path/to/PhytoPipe/db/ICTV_virus_acronym.txt
 monitorPathogen: /path/to/PhytoPipe/db/monitorPathogen.txt
 
 #microbial taxon ids
-microbialTaxon: /my/databases/ncbi/microbial.tids
+microbialTaxon: /path/to/database/microbial.tids
 
 #Blast databases
 #'virus' is for blasting against RVDB and viral references.
