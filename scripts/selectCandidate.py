@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 ######################################################################
 #Alex Hu <xiaojun.hu@usda.gov>
-#Updated: 11/10/2022
+#Updated: 07/15/2021
 #This program selects top references from kraken2, kaiju, blastn and blastx resultx
 #
 #Required Parameters:
@@ -124,6 +124,7 @@ def getKraken(kFile):
     keep taxon_id  and assigned reads
     """
     #20.06  3234437 3234437 U       0       unclassified
+    #kraken_viral_cutoff = 50  
     krakenDict = {}
     vFlag = 0
     with open(kFile) as f:
@@ -137,6 +138,7 @@ def getKraken(kFile):
                 vFlag = 1
                 continue    
             if vFlag == 1 and cells[3].startswith('S') and float(cells[2]) >= kraken_viral_cutoff and 'synthetic construct' not in cells[5]: 
+                #[cells[0],cells[2],cells[4], cells[5],'Viruses'] = ['PercentageOfMappedReads', 'NumberOfReads', "TaxonId", 'Species', 'Domain']
                 krakenDict[cells[4]] = cells[2] #taxon_id => reads
 
     return krakenDict
@@ -154,16 +156,18 @@ def selectTop(blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cutoff_blast
         if( float(blastnDict[id][10]) == 0.0 and float(blastnDict[id][2]) >= identity_cutoff):  #and (blastnDict[id][-1] == "Viruses" or blastnDict[id][-1] == "Bacteria" or blastnDict[id][-1] == "Fungi" or blastnDict[id][-1] == "Archaea") ): #only pathogens
             outDict[id] = "\t".join(blastnDict[id]) + "\tBlastn"
             taxonDict[blastnDict[id][13]] = 1
-
+            #print("Blastn ", id, " ", blastnDict[id][13])
         #2)select a viroid if its evalue<=1e-10 and have viroid in the annotation
         if("viroid" in blastnDict[id][12] and float(blastnDict[id][10]) <= virod_cutoff):  
             outDict[id] = "\t".join(blastnDict[id]) + "\tBlastn"
             taxonDict[blastnDict[id][13]] = 1
+            #print("Blastn viroid", id, " ", blastnDict[id][13])
 
     #2. select a virus if a viral protein is identified (evalue=0)
     for id in blastxDict:
         #if matched protein is found, keep it
         if float(blastxDict[id][10]) == 0.0 and id not in outDict:
+            #print("Blastx ", id, " ", blastxDict[id][13])
             taxonDict[blastxDict[id][13]] = 1            
             outDict[id] = "\t".join(blastxDict[id]) + "\tBlastx"  #+ "\t"*5, blastxDict[id][16]
 
@@ -172,9 +176,11 @@ def selectTop(blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cutoff_blast
         for id in blastnDict:
             if id not in outDict and blastnDict[id][13] not in taxonDict:  #if a contig or a taxon is not previously selected 
                 #if taxon_id in both kraken2 and blastn, and blastn evalue < cutoff, keep it
-                if tid == blastnDict[id][13] and float(blastnDict[id][10]) <= evalue_cutoff_blastn: #if the same taxon id
+                #print(id, tid, blastnDict[id][13], blastnDict[id][10])
+                if tid == blastnDict[id][13] and float(blastnDict[id][10]) <= evalue_cutoff_blastn and float(blastnDict[id][2]) >= identity_cutoff: #if the same taxon id, e-value<cutoff, identity > cutoff
                     outDict[id] = "\t".join(blastnDict[id]) + "\tBlastn"
                     taxonDict[blastnDict[id][13]] = 1
+                    #print("Kraken2 + blastn ", id, " ", blastnDict[id][13])
 
     #4. for the virus having several segments, if one fragment passes the threshold, the other fragments should be included, even the contig e-value is higher. The contig with highest bit score one is kept
     refTaxonDict = {}
@@ -189,10 +195,13 @@ def selectTop(blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cutoff_blast
                     #keep the contig with the higher bitScore [11] 
                     if rtId not in refTaxonDict or float(refTaxonDict[rtId][11]) < float(blastnDict[bid][11]):
                         refTaxonDict[rtId] = blastnDict[bid]
+                        #print(blastnDict[bid])
+    #print(outDict.keys())                    
     for rtId in refTaxonDict:
         newid = refTaxonDict[rtId][0] #contig name
         if newid not in outDict:
             outDict[newid] = "\t".join(refTaxonDict[rtId]) + "\tBlastn"
+            #print("Virus segments ", newid)
         
     #5. if virus is found in both kaiju and blastx
     for id in blastxDict:
@@ -201,6 +210,7 @@ def selectTop(blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cutoff_blast
             if id not in outDict and blastxDict[id][13] not in taxonDict and float(kaijuDict[tid]) >= kaiju_cutoff: #if Kaiju reads# >=100:
                 #if taxon_id in both kaiju and blastx and blastx evalue < cutoff, keep it
                 if tid == blastxDict[id][13] and float(blastxDict[id][10]) <= evalue_cutoff_blastx: #if the same taxon id
+                    #print("Kaiju + Blastx ", id, " ", blastxDict[id][13])
                     taxonDict[blastxDict[id][13]] = 1    
                     outDict[id] = "\t".join(blastxDict[id]) + "\tBlastx"  #+ "\t"*5, blastxDict[id][16]
     
@@ -230,6 +240,7 @@ def getRefName(selectDict):
             cid = rid + "_" + cells[13]
             if (cid not in idDictn or float(cells[11]) > bitscoreDictn[cid]):#keep the taxon having the higher bitscore
                 idDictn[cid] = rid
+                #print(id)
                 bitscoreDictn[cid] = float(cells[11]) #refid+taxonid, bitscore          
                 taxDict[cells[13]] = 1
 
@@ -259,7 +270,7 @@ def mergeBlast(blastnDict, blastxDict, contig_file):
 
     #put contig sequences in a dict
     contig_dict = SeqIO.index(contig_file, "fasta")
-
+    #print(contig_dict)
     #get all sequence id
     for id in blastnDict:
         idDict[id] = 1  #only in blastn
@@ -298,6 +309,7 @@ def main():
     contig_file = options.contig_file
     
     blastnDict = getBlastn(blastn_file)
+    #print(blastnDict)
     blastxDict = getBlastx(blastx_file)
     krakenDict = getKraken(kraken_file)
     kaijuDict = getKaiju(kaiju_file)

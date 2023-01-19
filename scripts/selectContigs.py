@@ -43,13 +43,13 @@ def getRelation(refFile):
         next(f) #skip the header
         for line in f:
             cells = line.rstrip().split('\t')
-            length = int(cells[3])
+            length = int(cells[4])
             identity = cells[2]
             id = cells[1]
             if "acc|" in cells[1]:
                 id = cells[1].split("|")[-2]
-            elif "." in cells[1]:
-                id = cells[1].split(".")[0]
+            #elif "." in cells[1]:
+            #    id = cells[1].split(".")[0]
             if(id not in refDict or lengthDict[id] < length): #only keep the longest contig for a ref
                 refDict[id] = [cells[0], length, identity]
                 lengthDict[id] = length  

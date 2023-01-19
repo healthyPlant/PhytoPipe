@@ -67,8 +67,14 @@ rule blastn_local:
             do
                 consensus0=$(basename $consensus '.consensus.N.fasta' )
                 refName="$(cut -d'.' -f2- <<<"$consensus0")"
-                #change sequence title
-                sed "1s/^.*$/>{params.smpName}.$refName.consensus/" "$consensus" >> {output.consensusFile}  #give the sequence new title (sampleName.reference name)
+                #compare a contig and a consensus sequence, if a contig is longer than 90% of a consensus (without N), use it
+                python {scripts_dir}/compareSeq.py -r $refName -s {params.smpName} -b {annotateDir}/{params.smpName}.selectedRef.txt -g {assembleDir}/{params.smpName}/contigs.fasta -c $inputPath/{params.smpName}.$refName.consensus.N.fasta -o $inputPath/{params.smpName}.$refName.contig.fasta 
+                if [ -f $inputPath/{params.smpName}.$refName.contig.fasta ]; then
+                    cat $inputPath/{params.smpName}.$refName.contig.fasta >> {output.consensusFile}
+                else
+                    #change sequence title
+                    sed "1s/^.*$/>{params.smpName}.$refName.consensus/" "$consensus" >> {output.consensusFile}  #give the sequence new title (sampleName.reference name)
+                fi
             done
         fi
 

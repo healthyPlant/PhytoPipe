@@ -1,13 +1,13 @@
 #! /usr/bin/env python
 ######################################################################
 #Alex Hu <xiaojun.hu@usda.gov>
-#Updated: 11/10/2022
+#Updated: 01/18/2023
 #This program generates a txt report, including read mapping statistics, consensus/contig blast results and sequences
 #The report has the following contents:
 #1.	Total number of reads obtained and approximate read length
 #2.	Number of reads mapping to the virus genome, the % of genome covered and the mean read coverage over the genome
 #3.	The virus sequence that was used as reference
-#4.	The closest nucleotide match from GenBank after BLASTn
+#4.	The closest nucleotide match from GenBank after BLASTn/BLASTx
 
 #Required Parameters:
 #   -w, --workdir X........................working directory
@@ -18,7 +18,7 @@
 #   -f, --reverse..........................Reverse strand surffix in the fastq file, ex. R1
 #######################################################################
 
-import os
+import os, sys
 from os import path
 import argparse   #take arguments
 import pandas as pd
@@ -27,9 +27,9 @@ import glob
 from datetime import datetime
 
 coverageCutoff = 10.0  #genome coverage cut off 10%
+
 #################################### Get sample information function ####################################
 def getReadStat(inFile, strand1, strand2):
-#def getReadStat(inFile):    
     """
     Read multiqc stats file qc/multiqc/raw_multiqc_data/multiqc_general_stats.txt and save to a hash
     """
@@ -43,7 +43,7 @@ def getReadStat(inFile, strand1, strand2):
             line = line.strip()
             cells = line.split("\t")
             smpName = cells[0]  #sample"_S1_R1_001"
-            if strand1 and strand1 in cells[0]:  #strand1 != ''
+            if strand1 and strand1 in cells[0]:  
                 smpName = re.sub(r"(.*)_%s.*" % strand1, "\\1", cells[0])  #cells[0].replace("_"+strand1, "")
                 statDict0[smpName] = {}
             elif strand2 in cells[0]:
@@ -53,9 +53,10 @@ def getReadStat(inFile, strand1, strand2):
             else:
                 smpName = cells[0]
                 statDict0[smpName] = {}
+            #print(smpName)
             statDict0[smpName].setdefault("readLen",[]).append(cells[3])
             statDict0[smpName].setdefault("totalRead",[]).append(cells[5])
-
+    #print(statDict0)
     #calculate average read length
     for smpName in statDict0:
         statDict[smpName] = []
@@ -66,6 +67,7 @@ def getReadStat(inFile, strand1, strand2):
             readLen = (float(statDict0[smpName]["readLen"][0]) + float(statDict0[smpName]["readLen"][1]))/2
             statDict[smpName].append(readLen)
             statDict[smpName].append(float(statDict0[smpName]["totalRead"][0]) + float(statDict0[smpName]["totalRead"][1]))        
+    #print(statDict)
     return statDict
 
 #################################### Get reference information function ####################################
@@ -125,15 +127,21 @@ def getMapInfo(refFile, bamFile, coverageFile, totalNumReads):
     """
     Summary mapping information:reference length, reference title, mapped reads, coverage, rpkm, 
     """
+    #refFile = refDir + '/' + sample + '/' + ref + '.fasta' 
+    #get reference title and lenth
     (refTitle, refLen) = getRefInfo(refFile)
     
     #get reference and its mapping information
+    #bamFile = mapDir + '/' + sample + '/' + ref + '.sorted.bam'
     cmd = 'samtools view -c -F 260 ' + bamFile
     mappedReads = os.popen(cmd).read().strip() #get sys comand return value, os.system only returns the error value.
     
     #get coverage
+    #coverageFile = mapDir + '/' + sample + '/' + ref + '.coverage.txt'
     (coverage, depth) = getCoverage(coverageFile)
     #get RPKM
+    #totalNumReads = readStat[sample][1]
+    #print(mappedReads,refLen,totalNumReads)
     (rpkm,mapPercent) = getRPKM(mappedReads,refLen,totalNumReads)
     
     mapArr = [refTitle, refLen, mappedReads,rpkm, mapPercent,coverage, depth]
@@ -145,10 +153,12 @@ def getBlast(blastFile):
     """
     Get NCBI blast result, it is the second line of the blastFile
     """
-    #T45588B2e_S8.NC_035759.consensus.blastn.txt
     #blastFile = ncbiBlastDir + '/' + sample + '.' + ref + '.consensus.blastn.txt'/'.contig.blastn.txt'/'contig.blastx.txt'
     cmd = 'head -2 ' + blastFile + ' | tail -1'
     blast = os.popen(cmd).read().strip()
+
+    #print(blastFile)
+    #print(blast)
     
     return blast
 
@@ -161,14 +171,15 @@ def getTax(annDir):
     #get all sample.selectedRef.txt
     refFiles = [f for f in glob.glob(annDir + "/*.selectedRef.txt", recursive=True)]
     for file in refFiles:
+        #print(file)
         with open(file) as fin:
             for line in fin.readlines()[1:]:
                 cells = list(map(str.strip, line.split("\t"))) #remove space at the start and end
                 id = cells[1]  #reference name, NC_003844.1
                 if "acc|" in id:  #acc|GENBANK|QGY72600.1|GENBANK|MN532657|RNA 
                     id = id.split("|")[-2]
-                if "." in id:
-                    id = id.split(".")[0]
+                #if "." in id:
+                #    id = id.split(".")[0]
                 taxon = cells[13:16] #[taxon_id, Species, taxon path]
 
                 taxonDict[id] = taxon
@@ -192,13 +203,19 @@ def getAcronym(acronymFile):
 
     
 #################################### Put all sample and mapping information together function ####################################
-def setReport(reportDict, refNameFile, refDir, mapDir, ncbiBlastDir, sample, trimReadStat, taxonDict, acronymDict, blastSuffix):
+def setReport(reportDict, refNameFile, refDir, mapDir, ncbiBlastDir, sample, trimReadStat, taxonDict, acronymDict):
     """
     Put all (raw read stat, trimmed read stat, mapping infor, blast) together
     """
+
     refName = [line.strip() for line in open(refNameFile, 'r')]
+    #print(refName)
+    #print(sample)
+    #print(readStat[sample])
+    #totalNumReads = readStat[sample][1]
     cleanNumReads = trimReadStat[sample][1]
     readStat0 = reportDict[sample + "|nan"]
+    #print(readStat0)
     for ref in refName:
         refFile = refDir + '/' + sample + '/' + ref + '.fasta'
         bamFile = mapDir + '/' + sample + '/' + ref + '.sorted.bam'
@@ -209,15 +226,23 @@ def setReport(reportDict, refNameFile, refDir, mapDir, ncbiBlastDir, sample, tri
 
         #filter low coverage (<10% genome) virus
         coverage = mapArr[5]
-        if "consensus.blastn" in blastSuffix and coverage < coverageCutoff: 
-            print("Low genome coverage virus filtered: ", ref, " in ", sample)
-            continue
+        #print(list(mapArr))
         
         #get concensus ncbi Blast information
-        blastnFile = ncbiBlastDir + '/' + sample + '.' + ref + blastSuffix #'.consensus.blastn.txt', '.contig.blastx.txt'
+        blastnFile = ncbiBlastDir + '/' + sample + '.' + ref + '.consensus.blastn.txt'
+        blastncFile = ncbiBlastDir + '/' + sample + '.' + ref + '.contig.blastn.txt' 
         blastxFile = ncbiBlastDir + '/' + sample + '.' + ref + '.contig.blastx.txt' #for config blastx result, it's possible a novel virus
         if os.path.isfile(blastnFile):
-            blast = getBlast(blastnFile)
+            blastSuffix = '.consensus.blastn.txt'
+            if coverage < coverageCutoff: 
+            #print(refFile, coverage)
+                print("Low genome coverage virus filtered: ", ref, " in ", sample)
+                continue
+            else:
+                blast = getBlast(blastnFile)
+        elif os.path.isfile(blastncFile):
+            blastSuffix = '.contig.blastn.txt'
+            blast = getBlast(blastncFile)
         elif os.path.isfile(blastxFile):
             blastSuffix = '.contig.blastx.txt'
             blast = getBlast(blastxFile)
@@ -225,18 +250,21 @@ def setReport(reportDict, refNameFile, refDir, mapDir, ncbiBlastDir, sample, tri
             blast = "nan\tnan\tnan\tnan\tnan"
 
         id = sample + "|" + ref
-        #in case reference id in both consensus and contig
         if id in reportDict:
             print(id, " has both consensus and contig in the report")
             id = sample + "|" + ref + ".1"
-
         reportDict.setdefault(id, [])
         reportDict[id].extend(readStat0)
+        #print(id, ref)
+        #print(taxonDict)
+        #print(taxonDict[ref])
         reportDict[id].append(ref)
         try: 
+            #print(taxonDict[ref][1], acronymDic[taxonDict[ref][1]])
             reportDict[id].extend(taxonDict[ref])
             reportDict[id].append(acronymDict[taxonDict[ref][1]]) #species vs. acronym
         except KeyError:
+            #print(ref, "ref is missed")
             reportDict[id].append("nan")
         reportDict[id].extend(map(str, mapArr))
 
@@ -279,20 +307,26 @@ def main():
     #get clean clean reads, afer removing duplicate reads and PhiX174 contaminant, triming low quality bases
     trimReadStat = getReadStat(trimReadStatFile, strand1, strand2)
 
+    #print(readStat)
+    #print(trimReadStat)
     #sync the sample names in the dicts: readStat, trimReadStat
-    for id1 in trimReadStat: #Q51550AB_S1
-        for id2 in list(readStat): #Q51550AB_S1_R1_001, '_S1_R1_001' is added by bcl2fastq
+    for id1 in trimReadStat: 
+        #print("trim id: ", id1)
+        for id2 in list(readStat): #'_S1_R1_001' is added by bcl2fastq
+            #print("raw id: ", id2)
             if id1 in id2:
                 readStat[id1] = readStat.pop(id2) #change dict key
 
     #get reference taxonomomy
     taxonDict = getTax(annDir) #ref: [taxonid, species, taxonomy]
+    #print(taxonDict)
     
     #get acronym 
     acronymDict = getAcronym(acronymFile) # taxonid: acronym
         
     #get sample names
     samples = list(trimReadStat.keys())
+    #print(samples)
 
     #put all samples report tegother
     reportDict = {}
@@ -301,9 +335,11 @@ def main():
         id = sample+"|nan"
         reportDict.setdefault(id, []).append(sample) #remove _S1 from sample name
         reportDict[id].extend(map(str,[round(readStat[sample][0],2), int(readStat[sample][1]), round(trimReadStat[sample][0],2), int(trimReadStat[sample][1])]))
+    #print(reportDict)
 
     #add mapping and blast information
     for sample in samples:
+        #print(sample)
         refNamenFile = annDir + '/' + sample + '.refNamen.txt'  #reference from blastn ex. 'annotation/NC_Apples_3_S3.refNamen.txt'
         refNamexFile = annDir + '/' + sample + '.refNamex.txt' #reference from blastx ex. 'annotation/NC_Apples_3_S3.refNamex.txt'
         refnSize = refxSize = 0
@@ -311,18 +347,17 @@ def main():
             refnSize =  os.stat(refNamenFile).st_size #check whether file is empty, os.stat("file").st_size == 0
         if path.exists(refNamexFile):
             refxSize = os.stat(refNamexFile).st_size
+            #print(type(refxSize))
         
         #blastn results
         if refnSize > 0: 
-            blastSuffix = '.consensus.blastn.txt'
-            setReport(reportDict, refNamenFile, refDir, mapDir,ncbiBlastDir, sample, trimReadStat, taxonDict, acronymDict, blastSuffix)
+            setReport(reportDict, refNamenFile, refDir, mapDir,ncbiBlastDir, sample, trimReadStat, taxonDict, acronymDict)
             print("Blastn: ", sample)
         #blastx results
         if refxSize > 0: 
             #get reference names
             print("Blastx: ", sample)
-            blastSuffix = '.contig.blastn.txt'
-            setReport(reportDict, refNamexFile, refDir, mapDir,ncbiBlastDir, sample, trimReadStat, taxonDict, acronymDict, blastSuffix)
+            setReport(reportDict, refNamexFile, refDir, mapDir,ncbiBlastDir, sample, trimReadStat, taxonDict, acronymDict)
         if refnSize == 0 and refxSize == 0:
             id = sample+"|nan"
             reportDict[id].extend(["nan"]*17)
@@ -347,9 +382,10 @@ def main():
             id = sample+"|nan"
             reportDict.setdefault(id, []).append(sample) #remove _S1 from sample name
             reportDict[id].extend(map(str,[round(readStat[sample][0],2), int(readStat[sample][1]), round(trimReadStat[sample][0],2), int(trimReadStat[sample][1])]))
-            #reportDict[id].extend(["nan"]*18)
             reportDict[id].extend(["nan"]*17)
 
+    #output
+    #print(reportDict.values())
     #output file
     fout = open(outFile, 'w')
     header = "Sample\tReadLength\tTotalReads\tCleanReadLength\tCleanReads\t"
