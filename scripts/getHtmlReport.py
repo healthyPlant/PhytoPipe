@@ -189,6 +189,48 @@ def extractKaiju(kjFile, mpFile):
 
 # First table: Use Pandas <a href="http://pandas.pydata.org/pandas-docs/version/0.15.1/generated/pandas.DataFrame.to_html.html">to_html()</a> routine to convert Pandas data frame to HTML table. Replace default table styling with <a href="http://getbootstrap.com/css">Bootstrap</a> table styling.
 
+#1. copy files to report folder
+#copy html files
+htmlDir = rptdir + '/html'
+if not os.path.isdir(htmlDir): #check a folder exists
+    os.mkdir(htmlDir) #make a folder
+imgDir = rptdir + '/image'
+if not os.path.isdir(imgDir): #check a folder exists
+    os.mkdir(imgDir) #make a folder
+
+#copy files
+source_dir = workdir + '/classification'
+for filename in glob.glob(os.path.join(source_dir, '*.html')):
+    try:
+        shutil.copy(filename, htmlDir)
+    except PermissionError:
+        print("Destination file exits!")
+source_dir = workdir + '/qc/raw_fastqc'
+for filename in glob.glob(os.path.join(source_dir, '*.html')):
+    shutil.copy(filename, htmlDir)
+source_dir = workdir + '/qc/trimmed_fastqc'
+for filename in glob.glob(os.path.join(source_dir, '*.html')):
+    shutil.copy(filename, htmlDir)   
+source_dir = workdir + '/qc/multiqc'
+for filename in glob.glob(os.path.join(source_dir, '*.html')):
+    shutil.copy(filename, htmlDir)
+
+#copy blast classification krona files
+source_dir = workdir + '/annotation'
+for filename in glob.glob(os.path.join(source_dir, '*.html')):
+    try:
+        shutil.copy(filename, htmlDir)
+    except PermissionError:
+        print("Destination file exits!")
+
+source_dir = workdir + '/mapping/map2Ref'
+for filename in glob.glob(os.path.join(source_dir, '*.png')):
+    shutil.copy(filename, imgDir) 
+source_dir = workdir + '/novelVirus/map2Contig'
+if os.path.exists(source_dir):
+    for filename in glob.glob(os.path.join(source_dir, '*.png')):
+        shutil.copy(filename, imgDir)
+
 #2. raw read QC from multiQC
 rawqcFile = workdir + '/qc/multiqc/raw_multiqc_data/multiqc_fastqc.txt'
 df = pd.read_csv(rawqcFile, sep='\t')
@@ -202,6 +244,12 @@ numFile = rptdir + '/qcReadNumber.txt'
 df = pd.read_csv(numFile, sep='\t', header = 0)
 numQC = df.to_html(index=False).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
 samples = df['Sample'].copy()
+
+#copy quast results
+for sample in samples:
+    fromName = workdir + '/qc/quast/' + sample + '.quast/report.html'
+    toName = htmlDir + '/' + sample + '.quast.html'
+    shutil.copy(fromName, toName)
 
 #4. clean read QC from multiQC
 cleanqcFile = workdir + '/qc/multiqc/trimmed_multiqc_data/multiqc_fastqc.txt'
@@ -480,54 +528,6 @@ if len(df11)>1:
     contigLinkStr = "<br />".join(contigLink)
 #print(refLinkStr)
 #print(contigLinkStr)
-
-#copy files to report folder
-#copy html files
-htmlDir = rptdir + '/html'
-if not os.path.isdir(htmlDir): #check a folder exists
-    os.mkdir(htmlDir) #make a folder
-imgDir = rptdir + '/image'
-if not os.path.isdir(imgDir): #check a folder exists
-    os.mkdir(imgDir) #make a folder
-
-#copy files
-source_dir = workdir + '/classification'
-for filename in glob.glob(os.path.join(source_dir, '*.html')):
-    try:
-        shutil.copy(filename, htmlDir)
-    except PermissionError:
-        print("Destination file exits!")
-source_dir = workdir + '/qc/raw_fastqc'
-for filename in glob.glob(os.path.join(source_dir, '*.html')):
-    shutil.copy(filename, htmlDir)
-source_dir = workdir + '/qc/trimmed_fastqc'
-for filename in glob.glob(os.path.join(source_dir, '*.html')):
-    shutil.copy(filename, htmlDir)   
-source_dir = workdir + '/qc/multiqc'
-for filename in glob.glob(os.path.join(source_dir, '*.html')):
-    shutil.copy(filename, htmlDir)
-
-#copy blast classification krona files
-source_dir = workdir + '/annotation'
-for filename in glob.glob(os.path.join(source_dir, '*.html')):
-    try:
-        shutil.copy(filename, htmlDir)
-    except PermissionError:
-        print("Destination file exits!")
-
-for sample in samples:
-    fromName = workdir + '/qc/quast/' + sample + '.quast/report.html'
-    toName = htmlDir + '/' + sample + '.quast.html'
-    shutil.copy(fromName, toName)
-
-source_dir = workdir + '/mapping/map2Ref'
-for filename in glob.glob(os.path.join(source_dir, '*.png')):
-    shutil.copy(filename, imgDir) 
-source_dir = workdir + '/novelVirus/map2Contig'
-if os.path.exists(source_dir):
-    for filename in glob.glob(os.path.join(source_dir, '*.png')):
-        shutil.copy(filename, imgDir)
-
 
 #get kraken2 and kaiju overlapped viruses
 df4['Sample_taxon'] = df4.Sample.str.cat(df4.TaxonId.astype(str), sep='_')
