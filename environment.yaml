@@ -17,7 +17,7 @@ dependencies:
   - fastqc
   - jellyfish
   - kaiju
-  - kraken2
+  - kraken2=2.0.8_beta
   - krona>=2.7
   - matplotlib
   - multiqc
