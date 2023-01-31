@@ -232,8 +232,8 @@ def setReport(reportDict, refNameFile, refDir, mapDir, ncbiBlastDir, sample, tri
         blastnFile = ncbiBlastDir + '/' + sample + '.' + ref + '.consensus.blastn.txt'
         blastncFile = ncbiBlastDir + '/' + sample + '.' + ref + '.contig.blastn.txt' 
         blastxFile = ncbiBlastDir + '/' + sample + '.' + ref + '.contig.blastx.txt' #for config blastx result, it's possible a novel virus
+        blastSuffix = '.consensus.blastn.txt'
         if os.path.isfile(blastnFile):
-            blastSuffix = '.consensus.blastn.txt'
             if coverage < coverageCutoff: 
             #print(refFile, coverage)
                 print("Low genome coverage virus filtered: ", ref, " in ", sample)
