@@ -86,8 +86,10 @@ rule blastn_local:
             for contig in `ls $inputPath/*.contig.fasta` 
             do
                 refName=$(basename $contig '.contig.fasta')  #remove '.contig.fasta'
-                #change sequence title
-                sed "1s/^.*$/>{params.smpName}.$refName.contig/" "$contig" >> {output.consensusFile}  #give the sequence new title (sampleName.reference name)
+                #change sequence title and add it if the contig is not in the file
+                if ! cat {output.consensusFile} | grep -q $refName; then  
+                    sed "1s/^.*$/>{params.smpName}.$refName.contig/" "$contig" >> {output.consensusFile}  #give the sequence new title (sampleName.reference name)
+                fi
             done
         fi
 
