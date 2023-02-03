@@ -171,7 +171,7 @@ strand1: 'R1'
 strand2: 'R2' 
 ```
 
-#### iI). Get your local databases
+#### ii). Get your local databases
 ```shell
 #kraken2 database folder
 krakenDb_dir=/my/db/path/kraken_db #hash.k2d  opts.k2d  seqid2taxid.map  taxo.k2d 
@@ -219,7 +219,7 @@ docker run -it --rm --name phytopipe \
            --config workDir=/data \
            --cores 32 
 ```
-After successfully run, you should see the report.
+After successfully run, you should see the report in the $workDir.
 
 You can download "runDocker.sh" from Github [PhytoPipe](https://github.com/healthyPlant/PhytoPipe) to edit and use it.
 ```
