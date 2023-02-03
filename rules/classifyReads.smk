@@ -1,44 +1,44 @@
 """
-    Run Kraken2 against NCBI nt and Kaiju against nr_euk pathogen proteins
+Run Kraken2 against NCBI nt and Kaiju against nr_euk pathogen proteins
 """
 __author__ = 'Xiaojun Hu <xiaojun.hu@usda.gov>'
 
-trimDir = config["run_info"]["trim"]
-cleanDir = config["run_info"]["clean"]
-logDir = config["run_info"]["log"]
-krakenDir = config["run_info"]["classify"]
+trimDir = config["workDir"] + "/" + config["run_info"]["trim"]
+cleanDir = config["workDir"] + "/" + config["run_info"]["clean"]
+logDir = config["workDir"] + "/" + config["run_info"]["log"]
+krakenDir = config["workDir"] + "/" + config["run_info"]["classify"]
 krakenDb = config["krakenDb"]
 kaijuDb = config["kaijuDb"]
 taxDb = config["taxDb"]
 seq_type = config["seq_type"]
 
 if (seq_type == "pe"):
-    paired_string = '--paired'
+	paired_string = '--paired'
 else:
-    paired_string = ''
+	paired_string = ''
 
 #for ambiguous input
 ruleorder: extractPathReads_pe > extractPathReads_se
 
 # Define input files
 def kraken_inputs(wildcards):
-    if (seq_type == "pe"):
-        reads = expand(trimDir + "/{sample}_{strand}.trimmed.fastq.gz", strand=['R1','R2'], sample=wildcards.sample)
-    elif (seq_type == "se"):
-        reads = trimDir + "/{sample}.trimmed.fastq.gz"
-    else:
-        sys.exit("Error: invalid sequencing type parameter. Must be 'se' or 'pe'")
-    return reads
+	if (seq_type == "pe"):
+		reads = expand(trimDir + "/{sample}_{strand}.trimmed.fastq.gz", strand=['R1','R2'], sample=wildcards.sample)
+	elif (seq_type == "se"):
+		reads = trimDir + "/{sample}.trimmed.fastq.gz"
+	else:
+		sys.exit("Error: invalid sequencing type parameter. Must be 'se' or 'pe'")
+	return reads
 
 def kaiju_inputs(wildcards):
-    reads = trimDir + "/{sample}.pathogen.fastq.gz"
-    if (seq_type == "pe"):
-        reads = expand(trimDir + "/{sample}_{strand}.trimmed.fastq.gz", strand=['R1','R2'], sample=wildcards.sample)
-    elif (seq_type == "se"):
-        reads = trimDir + "/{sample}.trimmed.fastq.gz"
-    else:
-        sys.exit("Error: invalid sequencing type parameter. Must be 'se' or 'pe'")
-    return reads
+	reads = trimDir + "/{sample}.pathogen.fastq.gz"
+	if (seq_type == "pe"):
+		reads = expand(trimDir + "/{sample}_{strand}.trimmed.fastq.gz", strand=['R1','R2'], sample=wildcards.sample)
+	elif (seq_type == "se"):
+		reads = trimDir + "/{sample}.trimmed.fastq.gz"
+	else:
+		sys.exit("Error: invalid sequencing type parameter. Must be 'se' or 'pe'")
+	return reads
 
 #since kraken takes a large memory, it can't be used parallel
 rule run_kraken:
@@ -48,7 +48,7 @@ rule run_kraken:
 	input:
 		kraken_inputs
 	output:
-		report = krakenDir + "/{sample}.kraken2.report.txt",
+		kreport = krakenDir + "/{sample}.kraken2.report.txt",
 		readClass = temp(krakenDir + "/{sample}.kraken2.txt")
 	message:
 		'''--- {wildcards.sample} kraken2'''
@@ -72,7 +72,7 @@ rule run_kraken:
 			unclassifiedReadOut={params.unclassifiedRead}".R#.fastq"
 		fi
 		#run Kraken2
-		kraken2 --threads {threads} --db {krakenDb} {params.param} {params.paired_string} --output {output.readClass} --report {output.report} --unclassified-out $unclassifiedReadOut {input} &>> {log}
+		kraken2 --threads {threads} --db {krakenDb} {params.param} {params.paired_string} --output {output.readClass} --report {output.kreport} --unclassified-out $unclassifiedReadOut {input} &>> {log}
 		
 		if [ -f {params.unclassifiedRead}".R_2.fastq" ]; then
 			mv {params.unclassifiedRead}".R_1.fastq" {krakenDir}/{wildcards.sample}"_R1.kraken2.unclassified.fastq"
@@ -88,7 +88,7 @@ rule run_krona:
 		krakenDir + "/{sample}.kraken2.report.txt"
 	output:
 		reducedReport = temp(krakenDir + "/{sample}.kraken2.reduced.report.txt"),
-		report = krakenDir + "/{sample}.kraken2.report.html"
+		kreport = krakenDir + "/{sample}.kraken2.report.html"
 	params:
 		" -m 3 -t 5 "
 	message:
@@ -96,7 +96,7 @@ rule run_krona:
 	shell:
 		"""
 		cat {input} | awk "{{if(\$1>=0.01) print}}"  > {output.reducedReport}  #reduce report size
-		ktImportTaxonomy {params} -o {output.report} {output.reducedReport}
+		ktImportTaxonomy {params} -o {output.kreport} {output.reducedReport}
 		"""   
 
 rule extractPathReads_se:
@@ -105,7 +105,7 @@ rule extractPathReads_se:
 	"""
 	input:
 		classFile = krakenDir + "/{sample}.kraken2.txt",
-		report = krakenDir + "/{sample}.kraken2.report.txt",
+		kreport = krakenDir + "/{sample}.kraken2.report.txt",
 		reads = trimDir + "/{sample}.trimmed.fastq.gz",
 	output:
 		idFile = temp(krakenDir + "/{sample}.pathogen.readId.txt"),
@@ -118,7 +118,7 @@ rule extractPathReads_se:
 		'''--- {wildcards.sample} pathogen reads extraction'''
 	shell:
 		"""
-		python {scripts_dir}/getReadIdFromKraken.py -k {input.classFile} -r {input.report} {params.param} -o {output.idFile}
+		python {scripts_dir}/getReadIdFromKraken.py -k {input.classFile} -r {input.kreport} {params.param} -o {output.idFile}
 		seqtk subseq {input.reads} {output.idFile} | cat {params.unclassifiedRead} - > {output.pathReadFile}
 		gzip -c {output.pathReadFile} > {output.gzFile} 
 		rm {params.unclassifiedRead}  
@@ -130,7 +130,7 @@ rule extractPathReads_pe:
 	"""
 	input:
 		classFile = krakenDir + "/{sample}.kraken2.txt",
-		report = krakenDir + "/{sample}.kraken2.report.txt",
+		kreport = krakenDir + "/{sample}.kraken2.report.txt",
 		reads1 = trimDir + "/{sample}_R1.trimmed.fastq.gz",
 		reads2 = trimDir + "/{sample}_R2.trimmed.fastq.gz",
 	output:
@@ -147,7 +147,7 @@ rule extractPathReads_pe:
 		'''--- {wildcards.sample} pathogen reads extraction'''
 	shell:
 		"""
-		python {scripts_dir}/getReadIdFromKraken.py -k {input.classFile} -r {input.report} {params.param} -o {output.idFile}
+		python {scripts_dir}/getReadIdFromKraken.py -k {input.classFile} -r {input.kreport} {params.param} -o {output.idFile}
 		seqtk subseq {input.reads1} {output.idFile} | cat {params.unclassifiedRead1} - > {output.pathReadFile1}
 		seqtk subseq {input.reads2} {output.idFile} | cat {params.unclassifiedRead2} - > {output.pathReadFile2}
 		gzip -c {output.pathReadFile1} > {output.gzFile1}   

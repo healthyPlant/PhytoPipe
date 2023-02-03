@@ -38,28 +38,29 @@ scripts_dir = os.path.abspath(os.path.join(SNAKEFILE_DIR, "scripts")) 			#direct
 
 #running folders
 seq_type = config["seq_type"] 
-rawReadDir = config["run_info"]["raw"]
-qcDir = config["run_info"]["qc"]
-logDir = config["run_info"]["log"]
-trimDir = config["run_info"]["trim"]
-assembleDir = config["run_info"]["assemble"]
-classifyDir = config["run_info"]["classify"]
-annotateDir = config["run_info"]["annotate"]
-mapDir = config["run_info"]["map"]
-reportDir = config["run_info"]["report"]
-novelDir = config["run_info"]["novel"]
+rawReadDir = config["workDir"] + "/" + config["run_info"]["raw"]
+qcDir = config["workDir"] + "/" + config["run_info"]["qc"]
+logDir = config["workDir"] + "/" + config["run_info"]["log"]
+trimDir = config["workDir"] + "/" + config["run_info"]["trim"]
+assembleDir = config["workDir"] + "/" + config["run_info"]["assemble"]
+classifyDir = config["workDir"] + "/" + config["run_info"]["classify"]
+annotateDir = config["workDir"] + "/" + config["run_info"]["annotate"]
+mapDir = config["workDir"] + "/" + config["run_info"]["map"]
+reportDir = config["workDir"] + "/" + config["run_info"]["report"]
+novelDir = config["workDir"] + "/" + config["run_info"]["novel"]
+cleanDir = config["workDir"] + "/" + config["run_info"]["clean"]
 blastDbType = config["blastDbType"]
 reportFile = reportDir + "/report.txt" 
 htmlReport = reportFile.replace(".txt", ".html")
 
 if os.path.isfile(reportFile):
-    os.remove(reportFile)
+	os.remove(reportFile)
 
 ## Check whether input fastq files are compressed or not
 if  "input_format" in config.keys():
-    input_format = config["input_format"]
+	input_format = config["input_format"]
 else:
-    input_format = "fastq.gz"
+	input_format = "fastq.gz"
 
 #Run bcl2fastq
 #bclOption = " --barcode-mismatches 0 --no-lane-splitting "  #for one index  
@@ -67,28 +68,28 @@ bclOption = " --barcode-mismatches 1 --no-lane-splitting "  #for dual index
 
 #setup soft link or copy fastq files to rawReadDir
 if fastqDir:
-    #set up soft link for fastq files if fastq folder is surpplied
-    if not os.path.exists(rawReadDir):
-        os.system("ln -sf " + fastqDir + " " + rawReadDir)
-    # Check if given path is link
-    if os.path.exists(rawReadDir) and os.path.islink(rawReadDir):
-        print(fastqDir, " soft link is built." )
-    else:
-        # soft link broken, copy files
-        if not os.path.isdir(rawReadDir): #check a folder exists
-            os.mkdir(rawReadDir) #make a folder
-        os.system("cp " + fastqDir + "/*." + input_format + " " + rawReadDir + "/")  
-			
+	#set up soft link for fastq files if fastq folder is surpplied
+	if not os.path.exists(rawReadDir):
+		os.system("ln -sf " + fastqDir + " " + rawReadDir)
+	# Check if given path is link
+	if os.path.exists(rawReadDir) and os.path.islink(rawReadDir):
+		print(fastqDir, " soft link is built." )
+	else:
+		# soft link broken, copy files
+		if not os.path.isdir(rawReadDir): #check a folder exists
+			os.mkdir(rawReadDir) #make a folder
+		os.system("cp " + fastqDir + "/*." + input_format + " " + rawReadDir + "/")  
+
 elif flowCellDir and len(os.listdir(flowCellDir)) != 0 :
-    print("Runing bcl2fastq")
-    if not os.path.isdir(rawReadDir): #check a folder exists
-        os.mkdir(rawReadDir) #make a folder
-    os.system("bcl2fastq -R " + flowCellDir + " -o " + rawReadDir + bclOption + ">> " + rawReadDir + "/bcl2fastq.log 2>&1")
-    #--sample-sheet SampleSheet.csv
+	print("Runing bcl2fastq")
+	if not os.path.isdir(rawReadDir): #check a folder exists
+		os.mkdir(rawReadDir) #make a folder
+	os.system("bcl2fastq -R " + flowCellDir + " -o " + rawReadDir + bclOption + ">> " + rawReadDir + "/bcl2fastq.log 2>&1")
+	#--sample-sheet SampleSheet.csv
 
 if not os.listdir(rawReadDir): 
-    print(rawReadDir + " is empty. Exit!") 
-    sys.exit()
+	print(rawReadDir + " is empty. Exit!") 
+	sys.exit()
 
 #get sample names from rawReadDir
 #print(config['workdir'])
@@ -125,7 +126,7 @@ include: os.path.join(snakefiles_dir, "makeReport.smk")
 
 # Single-end
 if (seq_type == "se"):
-    #QC raw reads
+	#QC raw reads
 	rawFastQC = expand(qcDir + "/raw_fastqc/{sample}_fastqc.zip", sample=SAMPLES)
 	#check host ribosomal RNA
 	rRNACheck = expand(trimDir + "/{sample}.filtRNA.fastq.gz", sample=SAMPLES)
@@ -142,36 +143,36 @@ if (seq_type == "se"):
 
 # Paired-ends
 elif (seq_type == "pe"):
-    #QC raw reads
-    rawFastQC = expand(qcDir + "/raw_fastqc/{sample}_{strand}_fastqc.zip", sample=SAMPLES, strand=STRANDS),
-    #check host ribosomal RNA
-    rRNACheck = expand(trimDir + "/{sample}_R2.filtRNA.fastq.gz", sample=SAMPLES),
-    #remove duplicate reads	
-    rmDup = expand(trimDir + "/{sample}_R2.rmdup.fastq.gz",sample=SAMPLES), #strand=STRANDS)
-    #remove PhiX174 contaminant
-    rmCtm = expand(trimDir + "/{sample}_R2.rmdup_ctm.fastq.gz", sample=SAMPLES) #, strand=STRANDS), #run clumpify to remove duplicate reads
-    #Trim reads
-    trim = expand(trimDir + "/{sample}_R2.trimmed.fastq.gz", sample=SAMPLES) #, strand=STRANDS), #run trimmomatic 
-    #QC trimmed reads
-    trimmedFastQC = expand(qcDir + "/trimmed_fastqc/{sample}_{strand}.trimmed_fastqc.zip", sample=SAMPLES, strand=['R1','R2']), #STRANDS), #run fastqc for trimmed reads
-    #extract pathogen reads
-    extractPathRead = expand(cleanDir + "/{sample}_R2.pathogen.fastq.gz", sample=SAMPLES), #strand=STRANDS),
+	#QC raw reads
+	rawFastQC = expand(qcDir + "/raw_fastqc/{sample}_{strand}_fastqc.zip", sample=SAMPLES, strand=STRANDS),
+	#check host ribosomal RNA
+	rRNACheck = expand(trimDir + "/{sample}_R2.filtRNA.fastq.gz", sample=SAMPLES),
+	#remove duplicate reads	
+	rmDup = expand(trimDir + "/{sample}_R2.rmdup.fastq.gz",sample=SAMPLES), #strand=STRANDS)
+	#remove PhiX174 contaminant
+	rmCtm = expand(trimDir + "/{sample}_R2.rmdup_ctm.fastq.gz", sample=SAMPLES) #, strand=STRANDS), #run clumpify to remove duplicate reads
+	#Trim reads
+	trim = expand(trimDir + "/{sample}_R2.trimmed.fastq.gz", sample=SAMPLES) #, strand=STRANDS), #run trimmomatic 
+	#QC trimmed reads
+	trimmedFastQC = expand(qcDir + "/trimmed_fastqc/{sample}_{strand}.trimmed_fastqc.zip", sample=SAMPLES, strand=['R1','R2']), #STRANDS), #run fastqc for trimmed reads
+	#extract pathogen reads
+	extractPathRead = expand(cleanDir + "/{sample}_R2.pathogen.fastq.gz", sample=SAMPLES), #strand=STRANDS),
 
 else:
-    sys.exit("Error: invalid 'seq_type parameter'. Must be 'se' or 'pe'")
+	sys.exit("Error: invalid 'seq_type parameter'. Must be 'se' or 'pe'")
 
 #Give the user options to blast against only viral sequences or all NCBI nt and nr databases
 runBlast = list()
 #Run Blastn againt NCBI viral ref
 viralblastn=expand(annotateDir + "/{sample}.blastn.txt", sample=SAMPLES)
-#Run Diamond/Blastx againt RVDB		
+#Run Diamond/Blastx againt RVDB
 viralblastx=expand(annotateDir + "/{sample}.blastx.txt", sample=SAMPLES)
 runBlast.append(viralblastn)
 runBlast.append(viralblastx)
 if (blastDbType == "all"):
-	#Run Blastn againt NCBI nt		
+	#Run Blastn againt NCBI nt
 	allBlastnt = expand(annotateDir + "/{sample}.blastnt.txt", sample=SAMPLES)
-	#Run Diamond/Blastx againt NCBI nr		
+	#Run Diamond/Blastx againt NCBI nr
 	allBlastnr = expand(annotateDir + "/{sample}.blastnr.txt", sample=SAMPLES)
 	runBlast.append(allBlastnt)
 	runBlast.append(allBlastnr)
@@ -233,4 +234,4 @@ rule all:
 		htmlReport
 
 	message: "Rule all"
-	shell: "echo Job done    `date '+%Y-%m-%d %H:%M'`"			
+	shell: "echo Job done    `date '+%Y-%m-%d %H:%M'`"
