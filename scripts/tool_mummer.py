@@ -4,7 +4,7 @@
 '''
 
 import logging
-import tools
+#import tools
 import util_file
 import util_misc
 import os
@@ -12,31 +12,42 @@ import os.path
 import random
 import subprocess
 import Bio.SeqIO
+import shutil
 
 TOOL_NAME = "mummer4"
-tool_version = '4.0.0beta2'
+tool_version = '4.0.0rc1'
 
 log = logging.getLogger(__name__)
 
 
-class MummerTool(tools.Tool):
-
+#class MummerTool(tools.Tool):
+class MummerTool():
     def __init__(self, install_methods=None):
-        if install_methods is None:
-            install_methods = [
-                tools.CondaPackage(TOOL_NAME, executable="mummer", version=tool_version)
-                ]
-        tools.Tool.__init__(self, install_methods=install_methods)
+        #if install_methods is None:
+        #    install_methods = [
+        #        tools.CondaPackage(TOOL_NAME, executable="mummer", version=tool_version)
+        #        ]
+        #tools.Tool.__init__(self, install_methods=install_methods)
+        self.installed_method = None
+        self.exec_path = shutil.which('mummer').replace("/mummer", "") #"/usr/local/bin/" 
 
     def version(self):
         return tool_version
 
     def executable_path(self):
-        exec_path = tools.Tool.executable_path(self)
+        exec_path = self.exec_path  #tools.Tool.executable_path(self)
         if os.path.isdir(exec_path):
             return exec_path
         else:
             return os.path.dirname(exec_path)
+
+    #move from tools.py
+    def install_and_get_path(self):
+        #self.install()
+        if self.executable_path() == None:
+            raise NameError("unsuccessful in installing " + type(self).__name__)
+        return self.executable_path()
+        
 
     def execute(self, refFasta, qryFastas):
         toolCmd = [os.path.join(self.install_and_get_path(), 'mummer'),
