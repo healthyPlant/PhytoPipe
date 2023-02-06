@@ -91,6 +91,13 @@ You can view progress or errors in the file 'nohup.out'
 ### PhytoPipe quick test
 After software and databases are ready, you can run a quick test using the data in the test/data folder. The steps can be found in [test notebook](test/quick_test.ipynb).  
 
+# PhytoPipe docker image
+[The PhytoPipe docker image](https://hub.docker.com/r/xhu556/phytopipe) can be pulled 
+```
+docker pull xhu556/phytopipe
+```
+Docker can avoid the software installation. You can use the docker image on any system. PhytoPipe docker image usage is in the [docker README](https://hub.docker.com/r/xhu556/phytopipe).
+
 # Documentation
 
 More information on input/output, dependencies, and databases are found in the [wiki](https://github.com/healthyPlant/PhytoPipe/wiki)
