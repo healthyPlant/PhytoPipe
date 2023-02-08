@@ -190,6 +190,11 @@ sudo ln -s $SRC/seqtk/seqtk $BIN/seqtk
 
 wget ftp://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/edirect.tar.gz && \
     gunzip -c edirect.tar.gz | tar xf -
+cd $SRC/edirect
+./nquire -dwn ftp.ncbi.nlm.nih.gov entrez/entrezdirect xtract.Linux.gz
+gunzip -f xtract.Linux.gz
+chmod +x xtract.Linux
+cd ..
 find $SRC/edirect -type f -executable -exec ln -s {} $BIN/ \;
 
 #install pandas

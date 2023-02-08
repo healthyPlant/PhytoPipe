@@ -229,7 +229,13 @@ RUN rm -rf $SRC/mummer-4.0.0rc1
 #install Entrez Direct (EDirect) 
 RUN wget ftp://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/edirect.tar.gz && \
     gunzip -c edirect.tar.gz | tar xf -
+RUN cd $SRC/edirect && \
+    wget ftp://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/xtract.Linux.gz && \
+    gunzip -f xtract.Linux.gz && \
+    chmod +x xtract.Linux && \
+    cd ..
 RUN find $SRC/edirect -type f -executable -exec ln -s {} $BIN/ \;
+
 
 # some cleanup
 WORKDIR $SRC

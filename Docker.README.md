@@ -2,7 +2,7 @@
 
 This repository is designed to show examples of ways in which you can utilize
 the Docker images that come prepackaged with
-[PhytoPipe](https://github.com/healthyPlant/PhytoPipe)
+[PhytoPipe](https://github.com/healthyPlant/PhytoPipe).
 
 
 ## Bioinformatics tools in the image
@@ -37,30 +37,110 @@ KronaTools|v2.8.1|
 ### 1. use the interactive bash
 ```shell
 workDir=/my/work/directory
-docker run -it --rm -v $workDir:/data phytopipe /bin/bash
-#/data is a directory in the image and links to your workDir through the parameter "-v". You can run any commands in the docker bash, for example list all files
-ls -al /data 
+docker run -it --rm -v $workDir:/data xhu556/phytopipe /bin/bash
+#/data is a directory in the image and links to your local workDir (/my/work/directory) through the parameter "-v". You can run any Linux commands in the docker bash, for example list all files in /my/work/directory.
+ls -al /data
 ```
-### 2. Directly run a command in the image
-This is example to run KronaTools
+Run all PhytoPipe commands in [PhytoPipe wiki](https://github.com/healthyPlant/PhytoPipe/wiki).
 ```shell
-docker run --rm -v /my/local/software/KronaTools-2.8.1/taxonomy:/opt/KronaTools-2.8.1/taxonomy -v /my/workDir/Dataset1:/data phytopipe ktImportTaxonomy -m 3 -t 5 -o /data/Dataset1.kraken2.krona.html /data/Dataset1.kraken2.report.txt
-```
-Krona taxonomy database is in the local folder /my/local/software/KronaTools-2.8.1/taxonomy. /opt/KronaTools-2.8.1/taxonomy is a link in the image; Dataset1.kraken2.report.txt is the input for Krona. It's in the local folder /my/workDir/Dataset1; The output is Dataset1.kraken2.krona.html, which is in the local folder. 
+#for example, build nr Diamond database
+mkdir -p /data/phytopipe_db/ncbi
+cd /data/phytopipe_db/ncbi
+wget ftp://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/nr.gz
+diamond makedb --in nr.gz -d nr
+ls -ltr
+``` 
+You can see the file nr.dmnd in the local folder /my/work/directory.
 
-### 3. Run PhytoPipe 
-#### i). Create a config.yml file
-You can download "config.docker.yaml" from Github [PhytoPipe](https://github.com/healthyPlant/PhytoPipe) to edit or copy the following code to edit
+PhytoPipe and other tools are installed in the /opt folder. You can run PhytoPipe after you build all required [databases](https://github.com/healthyPlant/PhytoPipe/wiki#databases).
+Suppose your databases are in the folder /my/work/directory/phytopipe_db and your sequence files are in the folder /my/work/directory/phytopipe_run/raw. Remember these two folders in the docker container are under /data folder (we use -v to build a link between the local folder /my/work/directory and the docker folder /data). The folder phytopipe_run is the phytopipe work directory. Now you can modify the config file /opt/phytopipe/config.yaml.
 ```shell
-#For single-end file
-#seq_type: 'se'  #'se' for single-end, 'pe' for paired-end  
-#strand1: ''  #'' for single-end file name without R1, 'R1' for single-end file name end with R1 or R1_001
-#strand2: 'R2'  # keep it even no paired R2 file
+nano /opt/phytopipe/config.yaml
+#Select sequence type (pe or se); change database paths to /data/phytopipe_db and make sure that files are available. 
+
+#dry run phytopipe
+snakemake  --configfile /opt/phytopipe/config.yaml -s /opt/phytopipe/Snakefile --config workDir=/data/phytopipe_run --cores 32 -n
+
+#if dry run success, run 
+snakemake  --configfile /opt/phytopipe/config.yaml -s /opt/phytopipe/Snakefile --config workDir=/data/phytopipe_run --cores 32
+```
+The final results are in the local folder /my/work/directory/phytopipe_run.  Please see the more information in [PhytoPipe wirki](https://github.com/healthyPlant/PhytoPipe/wiki#output). 
+
+### 2. Use the docker container as a second system
+You can run the interactive bash in a docker container. Every time you start this docker container, your previous works (for example, installed tools) are still there.
+Here are some steps to use our phytopipe docker image.
+#### i). Create a phytopipe docker container
+```
+workDir=/my/work/directory  #local folder
+docker run -it -v $workDir:/data xhu556/phytopipe /bin/bash 
+#do something
+touch testmycontainer
+exit 
+```
+#### ii). find your docker container id
+```
+docker ps -a
+```
+Suppose your "CONTAINER ID" is a2b0f6be4c72
+#### iii). start your docker container 
+```
+docker start a2b0f6be4c72
+docker exec -it a2b0f6be4c72 /bin/bash
+```
+#### iv). work on the docker container 
+```
+ls -al testmycontainer
+#You should see your previous work (testmycontainer)
+cd /data
+touch test
+#please work on /data folder in the container. So you can access all your works on your local folder /my/work/directory. 
+#You should see the file "test" in your local folder /my/work/directory.
+```
+Start here, you can build databases and run PhytoPipe in this container following [PhytoPipe wiki](https://github.com/healthyPlant/PhytoPipe/wiki).
+
+#### v). run PhytoPipe on the docker container 
+Before running PhytoPipe, please put your fastq files in /my/work/directory/phytopipe_run/raw (don not change 'raw', which is the default fastq file folder name PhytoPipe use ). After you modify /opt/phytopipe/config.yaml, you can run PhytoPipe using the following commands
+```shell
+#dry run
+snakemake  --configfile /opt/phytopipe/config.yaml -s /opt/phytopipe/Snakefile --config workDir=/data/phytopipe_run --cores 32 -n
+#if dry run success, please run
+snakemake  --configfile /opt/phytopipe/config.yaml -s /opt/phytopipe/Snakefile --config workDir=/data/phytopipe_run --cores 32 
+```
+After successfully running, you should see the report in the folder /my/work/directory/phytopipe_run. **/data is a folder name in the container for the local folder  /my/work/directory.**
+
+### 3. Directly run a command in the image
+This is example to run KronaTools to generate a Krona pie chart for taxonomy.
+```shell
+docker run --rm -v /my/local/software/KronaTools-2.8.1/taxonomy:/opt/KronaTools-2.8.1/taxonomy -v /my/workDir/Dataset1:/data xhu556/phytopipe ktImportTaxonomy -m 3 -t 5 -o /data/Dataset1.kraken2.krona.html /data/Dataset1.kraken2.report.txt
+```
+"-v /my/local/software/KronaTools-2.8.1/taxonomy:/opt/KronaTools-2.8.1/taxonomy" builds a bridge between the local folder /my/local/software/KronaTools-2.8.1/taxonomy and the folder /opt/KronaTools-2.8.1/taxonomy in the image.  Any files in the local folder can be accessed by the docker container. Doing this allows that the Krona taxonomy database in the local  machine can be used by the docker. 
+
+"-v /my/workDir/Dataset1:/data" links your local work directory (Dataset1) to the folder /data in the docker container.
+
+"xhu556/phytopipe" is the docker image name.
+
+"ktImportTaxonomy" is the command to run.
+
+" -m 3 -t 5 " is the parameters for the command.
+
+"-o /data/Dataset1.kraken2.krona.html" is the output. It is in the folder /data in the docker. But you can see it in your local work directory because of the bridge we built.
+
+"/data/Dataset1.kraken2.report.txt" is the input from Kraken2 classification.  The file "Dataset1.kraken2.report.txt" is in the local work directory. 
+
+
+### 4. Run PhytoPipe 
+#### i). Create your config.yaml file
+You can download "config.docker.yaml" from [PhytoPipe](https://github.com/healthyPlant/PhytoPipe) to edit or copy the following code to edit
+```shell
+#For single-read file
+#seq_type: 'se'  #'se' for single-readd, 'pe' for paired-end  
+#strand1: ''  #'' for single-read file name without R1, 'R1' for single-read file name end with R1 or R1_001
+#strand2: 'R2'  # keep it even no pair R2 file
 
 #For paired-end file
-seq_type: 'pe'  #'se' for single-end, 'pe' for paired-end  
+seq_type: 'pe'  #'se' for single-read, 'pe' for paired-end  
 strand1: 'R1'  # for pair-end file name with R1 and R2 or R1_001 and R2_001
-strand2: 'R2'  
+strand2: 'R2'   #for R2 or R2_001
 
 input_format: 'fastq.gz'  #read file format. 'fq.gz' is an option 
 number_of_threads: 16 #number of computer cores or threads
@@ -158,13 +238,13 @@ run_info:
   report: report                          #report directory    
   novel: novelVirus                       #novelVirus directory      
 ```
-**Important:** If you use single end reads, please use the single end setting and comment pair-end setting
+**Important:** If you use single-reads, please use the single-read setting and comment paired-end setting
 ```shell
 seq_type: 'se' 
 strand1: ''  
 strand2: 'R2'
 ```
-If you use pair-end reads, please use the paire-end setting and comment single end setting
+If you use paired-end reads, please use the paired-end setting and comment single-read setting
 ```shell
 seq_type: 'pe'  
 strand1: 'R1'  
@@ -190,14 +270,14 @@ kronaTaxDb_dir=/my/software/KronaTools-2.8.1/taxonomy  #all.accession2taxid.sort
 ```
 
 #### iii). Run PhytoPipe
-Your sequence fastq.gz files are in the folder $workDir/raw. Here we use VIROMOCKchallenge [Dataset8](https://gitlab.com/ilvo/VIROMOCKchallenge)(paried-end reads) and [Dataset10](https://gitlab.com/ilvo/VIROMOCKchallenge) (single-end reads, novel virus) to test the pipeline.
+Your sequence fastq.gz files are in the folder $workDir/raw. Here we use VIROMOCKchallenge [Dataset8](https://gitlab.com/ilvo/VIROMOCKchallenge)(paried-end reads) and [Dataset10](https://gitlab.com/ilvo/VIROMOCKchallenge) (single-reads, novel virus) to test the pipeline.
 ``` shell
-workDir=/home/myname/Dataset8  #Dataset10 
+workDir=/home/myname/Dataset8   
 config=/home/myname/Dataset8/config.docker.yaml
 
 #for Dataset10
-#workDir=/home/myname/Dataset8  #Dataset10 
-#config=/home/myname/Dataset8/config.docker.yaml
+#workDir=/home/myname/Dataset10   
+#config=/home/myname/Dataset10/config.docker.yaml
 
 #fastq file must be in $workDir/raw folder
 ls -al $workDir/raw
@@ -213,13 +293,13 @@ docker run -it --rm --name phytopipe \
            -v $taxDb_dir:/opt/phytopipe/db/ncbi/taxonomy \
            -v $kronaTaxDb_dir:/opt/KronaTools-2.8.1/taxonomy \
            -v $config:/opt/phytopipe/config.yaml \
-           phytopipe \
+           xhu556/phytopipe \
            snakemake --configfile /opt/phytopipe/config.yaml \
            -s /opt/phytopipe/Snakefile \
            --config workDir=/data \
            --cores 32 
 ```
-After successfully run, you should see the report in the $workDir.
+After successfully running, you should see the report in the $workDir.
 
 You can download "runDocker.sh" from Github [PhytoPipe](https://github.com/healthyPlant/PhytoPipe) to edit and use it.
 ```
