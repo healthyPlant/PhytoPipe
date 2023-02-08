@@ -188,6 +188,10 @@ cd seqtk
 make
 sudo ln -s $SRC/seqtk/seqtk $BIN/seqtk
 
+wget ftp://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/edirect.tar.gz && \
+    gunzip -c edirect.tar.gz | tar xf -
+find $SRC/edirect -type f -executable -exec ln -s {} $BIN/ \;
+
 #install pandas
 pip install pandas
 #install psam

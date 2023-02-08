@@ -226,6 +226,11 @@ RUN rm -rf $SRC/autoconf-2.69
 RUN rm -rf $SRC/trinityrnaseq-v2.15.0
 RUN rm -rf $SRC/mummer-4.0.0rc1
 
+#install Entrez Direct (EDirect) 
+RUN wget ftp://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/edirect.tar.gz && \
+    gunzip -c edirect.tar.gz | tar xf -
+RUN find $SRC/edirect -type f -executable -exec ln -s {} $BIN/ \;
+
 # some cleanup
 WORKDIR $SRC
 RUN rm -r *.tar.gz *.zip *.bz2
