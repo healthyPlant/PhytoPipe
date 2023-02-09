@@ -96,7 +96,7 @@ After software and databases are ready, you can run a quick test using the data 
 ```
 docker pull xhu556/phytopipe
 ```
-Docker can avoid the software installation. You can use the docker image on any system. PhytoPipe docker image usage is in the [docker README](https://hub.docker.com/r/xhu556/phytopipe).
+Docker can avoid the software installation. You can use the docker image on many systems (Linux, MAC, Windows). PhytoPipe docker image usage is in the [docker README](https://hub.docker.com/r/xhu556/phytopipe).
 
 # Documentation
 
