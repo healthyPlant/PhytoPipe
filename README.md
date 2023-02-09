@@ -23,7 +23,7 @@ PhytoPipe is an open-source bioinformatics pipeline for plant pathogen detection
    1. Removal of host reads (modified [`KrakenTools`](https://ccb.jhu.edu/software/krakentools/) (included) and [`seqtk`](https://github.com/lh3/seqtk))
    2. *De novo* assembly tools ([`Trinity`](https://github.com/trinityrnaseq/trinityrnaseq/wiki) *||* [`SPAdes`](http://cab.spbu.ru/software/spades/))
    3. Assembly assessment report ([`QUAST`](http://quast.sourceforge.net/quast))
-   4. Blastn to [`viral reference genome`](https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/) or [`NCBI nt database`](https://ftp.ncbi.nlm.nih.gov/blast/db/) ([`blastn`](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch))
+   4. Blastn to [`viral reference genome`](https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/) or plant viral database or [`NCBI nt database`](https://ftp.ncbi.nlm.nih.gov/blast/db/) ([`blastn`](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch))
    5. Diamond blastx to [`RVDB`](https://rvdb-prot.pasteur.fr/) or [`NCBI nr database`](https://ftp.ncbi.nlm.nih.gov/blast/db/) ([`Diamond`](https://github.com/bbuchfink/diamond))
    6. View conig classification with Krona pie chart ([`KronaTools`](https://github.com/marbl/Krona/tree/master/KronaTools))
 6. Reference-based mapping
