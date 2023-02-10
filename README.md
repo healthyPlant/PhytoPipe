@@ -68,7 +68,6 @@ To install all tools in a Ubuntu system, run
 ```
 sudo bash /path/to/PhytoPipe/scripts/installTools.sh /path/to/softare/folder
 ```
-
 ### Build databases
 To install/update all databases, run
 ```
