@@ -43,9 +43,11 @@ Clone the repository:
 
 #### Option 1: in a conda environment
 
-Create the environment without tools if they are already installed:
+Create the phytopipe conda environment:
 
 `conda create -n phytopipe python=3.7`
+
+Then install required tools following [PhytoPipe wiki](https://github.com/healthyPlant/PhytoPipe/wiki#dependencies).
 
 Or create the environment with installing tools by conda:
 
