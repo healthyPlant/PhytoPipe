@@ -23,7 +23,7 @@ PhytoPipe is an open-source bioinformatics pipeline for plant pathogen detection
    1. Removal of host reads (modified [`KrakenTools`](https://ccb.jhu.edu/software/krakentools/) (included) and [`seqtk`](https://github.com/lh3/seqtk))
    2. *De novo* assembly tools ([`Trinity`](https://github.com/trinityrnaseq/trinityrnaseq/wiki) *||* [`SPAdes`](http://cab.spbu.ru/software/spades/))
    3. Assembly assessment report ([`QUAST`](http://quast.sourceforge.net/quast))
-   4. Blastn to [`viral reference genome`](https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/) or [`NCBI nt database`](https://ftp.ncbi.nlm.nih.gov/blast/db/) ([`blastn`](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch))
+   4. Blastn to [`viral reference genome`](https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/) or plant viral database or [`NCBI nt database`](https://ftp.ncbi.nlm.nih.gov/blast/db/) ([`blastn`](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch))
    5. Diamond blastx to [`RVDB`](https://rvdb-prot.pasteur.fr/) or [`NCBI nr database`](https://ftp.ncbi.nlm.nih.gov/blast/db/) ([`Diamond`](https://github.com/bbuchfink/diamond))
    6. View conig classification with Krona pie chart ([`KronaTools`](https://github.com/marbl/Krona/tree/master/KronaTools))
 6. Reference-based mapping
@@ -37,15 +37,18 @@ PhytoPipe is an open-source bioinformatics pipeline for plant pathogen detection
 ## Quick start
 ### Installation
 
-Check [dependencies and databases requirements](https://github.com/healthyPlant/PhytoPipe/wiki), if they are met, then
-
 Clone the repository:
+```
+cd /path/to/softare
+git clone https://github.com/healthyPlant/PhytoPipe.git
+```
+#### Option 1: in a conda environment
 
-`git clone https://github.com/healthyPlant/PhytoPipe.git`
-
-Create the environment without tools if they are already installed:
+Create the phytopipe conda environment:
 
 `conda create -n phytopipe python=3.7`
+
+Then install required tools following [PhytoPipe wiki](https://github.com/healthyPlant/PhytoPipe/wiki#dependencies).
 
 Or create the environment with installing tools by conda:
 
@@ -63,10 +66,23 @@ If you want to remove PhytoPipe, simply type the following command,
 
 `conda env remove --name phytopipe`
 
+#### Option 2: in a normal Linux environment
+To install all tools in a Ubuntu system, run
+```
+sudo bash /path/to/PhytoPipe/scripts/installTools.sh /path/to/softare/folder
+```
+### Build databases
+To install/update all databases, run
+```
+nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/PhytoPipe /path/to/my/database RVDB_version(ex. v25.0) &
+```
+Please find the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the absolute path in the command.
+
 ### Set up configuration
 Customize the workflow based on your need in `config.yaml`, such as your sequence file extension and database paths. Please see the details in [wiki](https://github.com/healthyPlant/PhytoPipe/wiki).
 
 ### Run PhytoPipe
+Please check [dependencies and databases requirements](https://github.com/healthyPlant/PhytoPipe/wiki), if they are met, then you can run PhytoPipe
 
 For fastq.gz reads input dry-run:
 ```shell
@@ -96,7 +112,7 @@ After software and databases are ready, you can run a quick test using the data 
 ```
 docker pull xhu556/phytopipe
 ```
-Docker can avoid the software installation. You can use the docker image on any system. PhytoPipe docker image usage is in the [docker README](https://hub.docker.com/r/xhu556/phytopipe).
+Docker can avoid the software installation. You can use the docker image on many systems (Linux, MAC, Windows). PhytoPipe docker image usage is in its [docker README](https://hub.docker.com/r/xhu556/phytopipe).
 
 # Documentation
 
