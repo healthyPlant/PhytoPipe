@@ -38,9 +38,10 @@ PhytoPipe is an open-source bioinformatics pipeline for plant pathogen detection
 ### Installation
 
 Clone the repository:
-
-`git clone https://github.com/healthyPlant/PhytoPipe.git`
-
+```
+cd /path/to/softare
+git clone https://github.com/healthyPlant/PhytoPipe.git
+```
 #### Option 1: in a conda environment
 
 Create the phytopipe conda environment:
