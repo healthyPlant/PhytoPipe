@@ -37,11 +37,11 @@ PhytoPipe is an open-source bioinformatics pipeline for plant pathogen detection
 ## Quick start
 ### Installation
 
-Check [dependencies and databases requirements](https://github.com/healthyPlant/PhytoPipe/wiki), if they are met, then
-
 Clone the repository:
 
 `git clone https://github.com/healthyPlant/PhytoPipe.git`
+
+#### Option 1: in a conda environment
 
 Create the environment without tools if they are already installed:
 
@@ -63,10 +63,24 @@ If you want to remove PhytoPipe, simply type the following command,
 
 `conda env remove --name phytopipe`
 
+#### Option 2: in a normal Linux environment
+To install all tools in a Ubuntu system, run
+```
+sudo bash /path/to/PhytoPipe/scripts/installTools.sh /path/to/softare/folder
+```
+
+### Build databases
+To install/update all databases, run
+```
+nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/PhytoPipe /path/to/my/database RVDB_version(ex. v25.0) &
+```
+Please find the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the absolute path in the command.
+
 ### Set up configuration
 Customize the workflow based on your need in `config.yaml`, such as your sequence file extension and database paths. Please see the details in [wiki](https://github.com/healthyPlant/PhytoPipe/wiki).
 
 ### Run PhytoPipe
+Please check [dependencies and databases requirements](https://github.com/healthyPlant/PhytoPipe/wiki), if they are met, then you can run PhytoPipe
 
 For fastq.gz reads input dry-run:
 ```shell
