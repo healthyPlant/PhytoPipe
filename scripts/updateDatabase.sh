@@ -4,7 +4,11 @@
 #This script is for building and updating databases
 #************************************************************
 echo "please find RVDB version from https://rvdb-prot.pasteur.fr/, ex. v25.0"
-echo "Usage: bash /path/to/phytopipe/scripts/updateDatabase.sh [/path/to/phytopipe] [/path/my/database]  [rvdb_version, ex. v25.0]"
+#check argument number
+if [[ $# -ne 3 ]]; then
+    echo "Usage: bash /path/to/phytopipe/scripts/updateDatabase.sh [/path/to/phytopipe] [/path/my/database]  [rvdb_version, ex. v25.0]" >&2
+    exit 2
+fi
 
 phytopipe_dir=$1
 mydb=$2  #/ppq/data2/resources
@@ -22,17 +26,17 @@ excludeSeqId=$phytopipe_dir/db/unwantedSeqId.txt
 krakendb0=$mydb/kraken_db
 kaijudb0=$mydb/kaiju_db
 
-if [ ! -d $krakendb ]; then 
-    echo "$krakendb exists, we will build Kaiju database under a new directory $krakendb.1"
-    echo "After you test the new $krakendb.1, you can rename it by running "mv $krakendb.1 $krakendb" "
+if [ -d $krakendb ]; then 
+    echo "$krakendb exists, we will build Kraken2 database under a new directory $krakendb.1"
+    echo "After you test the new $krakendb.1, you can rename it by running \"mv $krakendb.1 $krakendb\" "
 fi
 
-if [ ! -d $kaijudb ]; then 
+if [ -d $kaijudb ]; then 
     echo "$kaijudb exists, we will build Kaiju database under a new directory $kaijudb.1"
-    echo "After you test the new $kaijudb.1, you can rename it by running "mv $kaijudb.1 $kaijudb" "
+    echo "After you test the new $kaijudb.1, you can rename it by running \"mv $kaijudb.1 $kaijudb\" "
 fi
 
-
+echo "#*****************************"
 echo "Check programs"
 programs=("kraken2-build" "kaiju-makedb" "update_blastdb.pl" "diamond" "updateTaxonomy.sh" "updateAccessions.sh" "parallel" "blastdbcmd" "makeblastdb" "kaiju-addTaxonNames" "get_species_taxids.sh" "esearch" "filterbyname.sh")
 for prog in ${programs[@]}
