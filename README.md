@@ -42,6 +42,7 @@ Clone the repository:
 cd /path/to/softare
 git clone https://github.com/healthyPlant/PhytoPipe.git
 ```
+Then you can install dependencies,
 #### Option 1: in a conda environment
 
 Create the phytopipe conda environment:
