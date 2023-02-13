@@ -75,9 +75,9 @@ sudo bash /path/to/PhytoPipe/scripts/installTools.sh /path/to/softare/folder
 ### Build databases
 To install/update all databases, run
 ```
-nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/PhytoPipe /path/to/my/database RVDB_version(ex. v25.0) &
+nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/PhytoPipe /path/to/my/database v25.0 &
 ```
-Please find the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the absolute path in the command.
+v25.0 is the RVDB version. Please find the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the absolute path in the command.
 
 ### Set up configuration
 Customize the workflow based on your need in `config.yaml`, such as your sequence file extension and database paths. Please see the details in [wiki](https://github.com/healthyPlant/PhytoPipe/wiki).
