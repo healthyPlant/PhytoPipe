@@ -167,10 +167,7 @@ RUN rm -rf $SRC/KronaTools-2.8.1.tar
 WORKDIR $SRC
 RUN wget https://downloads.sourceforge.net/project/bbmap/BBMap_39.01.tar.gz && \
     tar -xvzf BBMap_39.01.tar.gz
-RUN ln -s $SRC/bbmap/bbmap.sh $BIN/bbmap.sh
-RUN ln -s $SRC/bbmap/bbduk.sh $BIN/bbduk.sh
-RUN ln -s $SRC/bbmap/clumpify.sh $BIN/clumpify.sh
-RUN ln -s $SRC/bbmap/bbsplit.sh $BIN/bbsplit.sh
+RUN ln -s $SRC/bbmap/*.sh $BIN/.
 
 #Installing NCBI-BLAST+
 #RUN apt-get -qq -y install ncbi-blast+ #this is version 2.9, do not install
@@ -181,6 +178,7 @@ RUN wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast
     tar -xvzf ncbi-blast-2.13.0+-x64-linux.tar.gz
 RUN ln -s $SRC/ncbi-blast-2.13.0+/bin/* $BIN/.
 
+WORKDIR $SRC
 #install Bowtie2
 #apt-get -qq -y install bowtie2
 RUN wget https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.4.2/bowtie2-2.4.2-sra-linux-x86_64.zip && \
@@ -188,6 +186,7 @@ RUN wget https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.4.2/bowtie2
     mv bowtie2-2.4.2-sra-linux-x86_64 bowtie2-2.4.2  && \
     ln -s $SRC/bowtie2-2.4.2/bowtie2* $BIN/.
 
+WORKDIR $SRC
 #install bedtools
 #RUN apt-get -qq -y install bedtools
 RUN mkdir bedtools2 && \
@@ -198,7 +197,7 @@ RUN mkdir bedtools2 && \
     cd .. && \
     ln -s $SRC/bedtools2/bedtools $BIN/bedtools
 
-
+WORKDIR $SRC
 #install seqtk
 #RUN apt-get -qq -y install seqtk
 RUN git clone https://github.com/lh3/seqtk.git  && \
@@ -206,12 +205,14 @@ RUN git clone https://github.com/lh3/seqtk.git  && \
     make  && \
     ln -s $SRC/seqtk/seqtk $BIN/seqtk 
 
+WORKDIR $SRC
 #install SPADes
 #RUN apt-get -qq -y install spades
 RUN wget http://cab.spbu.ru/files/release3.15.5/SPAdes-3.15.5-Linux.tar.gz && \
     tar -xzf SPAdes-3.15.5-Linux.tar.gz  && \
     ln -s $SRC/SPAdes-3.15.5-Linux/bin/spades.py $BIN/spades.py
 
+WORKDIR $SRC
 #install recent version Kraken2
 #apt-get -qq -y install kraken2 #download library fail error, use git version
 RUN git clone https://github.com/DerrickWood/kraken2.git && \
@@ -220,11 +221,24 @@ RUN git clone https://github.com/DerrickWood/kraken2.git && \
     ln -s $SRC/kraken2.1.2/kraken2* $BIN/  && \
     cd ..
 
+WORKDIR $SRC
 #Install BWA
 RUN git clone https://github.com/lh3/bwa.git && \
     cd bwa; make  && \
     cd ..  && \
     ln -s $SRC/bwa/bwa $BIN/bwa
+
+WORKDIR $SRC
+#instal NCBI EDirect
+RUN wget ftp://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/edirect.tar.gz  && \
+    gunzip -c edirect.tar.gz | tar xf -  && \
+    cd edirect && \
+    wget ftp://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/xtract.Linux.gz &&\
+    gunzip -f xtract.Linux.gz && \
+    chmod +x xtract.Linux && \
+    cd .. && \
+    find $SRC/edirect -type f -executable -exec ln -s {} $BIN/ \;
+
 
 #install Diamond
 RUN apt-get -qq -y install diamond-aligner

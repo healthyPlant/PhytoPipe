@@ -6,20 +6,21 @@ config=/ppq/data0/phytopipe_docker/config.docker.yaml
 
 #databases
 #please change path to your database path
+#get your local databases
 #kraken2 database folder
-krakenDb_dir=/ppq/data2/resources/kraken_db
+krakenDb_dir=/my/work/directory/phytopipe_db/kraken_db #hash.k2d  opts.k2d  seqid2taxid.map  taxo.k2d 
 #kaiju database file
-kaijuDb_dir=/ppq/data2/resources/kaiju_db  #/kaiju_db_nr_euk.fmi
+kaijuDb_dir=/my/work/directory/phytopipe_db/kaiju_db  #/kaiju_db_nr_euk.fmi
 #NCBI blastn nt database downloaded from NCBI
-ncbi_nt_dir=/ppq/data2/resources/ncbi_nt  #/nt
+ncbi_nt_dir=/my/work/directory/phytopipe_db/ncbi_nt  #/nt
 #SILVA 18S and 28S Eukaryote ribosomal RNA database
-euk_rRNA_dir=/ppq/data2/resources/rRNA #/silva-euk_combined_rRNA.fasta
+euk_rRNA_dir=/my/work/directory/phytopipe_db/rRNA #/silva-euk_combined_rRNA.fasta
 #NCBI db
-ncbiDb_dir=/ppq/data2/resources/ncbi #nr.dmnd refseq_viral_genomic.fa  rvdb.dmnd
+ncbiDb_dir=/my/work/directory/phytopipe_db/ncbi #nr.dmnd refseq_viral_genomic.fa  rvdb.dmnd
 #NCBI taxonomy database
-taxDb_dir=/ppq/data2/resources/ncbi/taxonomy  #refseq_viral.gb_taxon.txt rvdb.gb_taxon.txt nodes.dmp names.dmp
+taxDb_dir=/my/work/directory/phytopipe_db/ncbi/taxonomy  #refseq_viral.gb_taxon.txt rvdb.gb_taxon.txt nodes.dmp names.dmp
 #Krona taxonomy
-kronaTaxDb_dir=/ppq/data0/software/KronaTools-2.8.1/taxonomy  #all.accession2taxid.sorted taxonomy.tab
+kronaTaxDb_dir=/my/work/directory/phytopipe_db/krona_db  #all.accession2taxid.sorted taxonomy.tab
 
 #use -d to run docker in background
 # -u $UID:$GROUPS \
