@@ -181,43 +181,50 @@ RUN wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast
     tar -xvzf ncbi-blast-2.13.0+-x64-linux.tar.gz
 RUN ln -s $SRC/ncbi-blast-2.13.0+/bin/* $BIN/.
 
-#install recent version Kraken2
-#sudo apt-get -qq -y install kraken2 #download library fail error, use git version
-RUN git clone https://github.com/DerrickWood/kraken2.git && \
-    cd kraken2 && \
-    ./install_kraken2.sh $SRC/kraken2.1.2 && \
-    cp $SRC/kraken2.1.2/kraken2{,-build,-inspect} $BIN/  && \
-    cd ..
-
 #install Bowtie2
-#sudo apt-get -qq -y install bowtie2
+#apt-get -qq -y install bowtie2
 RUN wget https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.4.2/bowtie2-2.4.2-sra-linux-x86_64.zip && \
     unzip bowtie2-2.4.2-sra-linux-x86_64.zip  && \
     mv bowtie2-2.4.2-sra-linux-x86_64 bowtie2-2.4.2  && \
-    sudo ln -s $SRC/bowtie2-2.4.2/bowtie2* $BIN/.
+    ln -s $SRC/bowtie2-2.4.2/bowtie2* $BIN/.
 
 #install bedtools
 #RUN apt-get -qq -y install bedtools
 RUN mkdir bedtools2 && \
-    cd bedtools2
-RUN wget https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools.static.binary  && \
+    cd bedtools2  && \
+    wget https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools.static.binary  && \
     mv bedtools.static.binary bedtools  && \
     chmod a+x bedtools  && \
-    sudo ln -s $SRC/bedtools2/bedtools $BIN/bedtools  && \
-    cd ..  && \
+    cd .. && \
+    ln -s $SRC/bedtools2/bedtools $BIN/bedtools
+
 
 #install seqtk
 #RUN apt-get -qq -y install seqtk
 RUN git clone https://github.com/lh3/seqtk.git  && \
     cd seqtk  && \
     make  && \
-    sudo ln -s $SRC/seqtk/seqtk $BIN/seqtk  && \
+    ln -s $SRC/seqtk/seqtk $BIN/seqtk 
 
 #install SPADes
 #RUN apt-get -qq -y install spades
 RUN wget http://cab.spbu.ru/files/release3.15.5/SPAdes-3.15.5-Linux.tar.gz && \
     tar -xzf SPAdes-3.15.5-Linux.tar.gz  && \
-    sudo ln -s $SRC/SPAdes-3.15.5-Linux/bin/spades.py $BIN/spades.py
+    ln -s $SRC/SPAdes-3.15.5-Linux/bin/spades.py $BIN/spades.py
+
+#install recent version Kraken2
+#apt-get -qq -y install kraken2 #download library fail error, use git version
+RUN git clone https://github.com/DerrickWood/kraken2.git && \
+    cd kraken2 && \
+    ./install_kraken2.sh $SRC/kraken2.1.2 && \
+    ln -s $SRC/kraken2.1.2/kraken2* $BIN/  && \
+    cd ..
+
+#Install BWA
+RUN git clone https://github.com/lh3/bwa.git && \
+    cd bwa; make  && \
+    cd ..  && \
+    ln -s $SRC/bwa/bwa $BIN/bwa
 
 #install Diamond
 RUN apt-get -qq -y install diamond-aligner
