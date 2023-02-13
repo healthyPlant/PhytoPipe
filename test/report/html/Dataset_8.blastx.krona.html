@@ -6084,10 +6084,10 @@ function snapshot()
 	snapshotMode = false;
 	
 	svg += svgFooter();
-	
-	var snapshotWindow = window.open('', '_blank', '', 'replace=false');
-	snapshotWindow.document.write('<html><body><a href="data:image/svg+xml,' + encodeURIComponent(svg) + '" download="snapshot.svg">Download Snapshot</a></html></body>');
-	snapshotWindow.document.write(svg);
+	var dataUri = 'data:image/svg+xml,' + encodeURIComponent(svg)
+	var string = '<html><body><iframe src="' + dataUri + '" frameborder="0" style="position:absolute; border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe><a style="position:absolute" href="' + dataUri + '" download="snapshot.svg">Download Snapshot</a></html></body>';
+    var win = window.open();
+    win.document.write(string)
 }
 
 function save()
@@ -6631,62 +6631,62 @@ function zoomOut()
    <datasets>
     <dataset>Dataset_8.blastx1</dataset>
    </datasets>
-   <color attribute="score" hueStart="120" hueEnd="0" valueStart="-450" valueEnd="-450" default="false" ></color>
+   <color attribute="score" hueStart="120" hueEnd="0" valueStart="-450" valueEnd="-286.67951451664" default="false" ></color>
 <node name="Root">
- <count><val>2</val></count>
+ <count><val>5</val></count>
  <node name="Viruses">
-  <count><val>2</val></count>
-  <score><val>-450</val></score>
   <taxon><val href="10239">10239</val></taxon>
   <rank><val>superkingdom</val></rank>
+  <score><val>-319.344</val></score>
+  <count><val>5</val></count>
   <node name="Riboviria">
-   <count><val>2</val></count>
-   <score><val>-450</val></score>
    <taxon><val href="2559587">2559587</val></taxon>
+   <count><val>5</val></count>
    <rank><val>clade</val></rank>
+   <score><val>-319.344</val></score>
    <node name="Orthornavirae">
-    <count><val>2</val></count>
-    <score><val>-450</val></score>
-    <taxon><val href="2732396">2732396</val></taxon>
+    <count><val>5</val></count>
+    <score><val>-319.344</val></score>
     <rank><val>kingdom</val></rank>
-    <node name="Kitrinoviricota">
-     <count><val>1</val></count>
+    <taxon><val href="2732396">2732396</val></taxon>
+    <node name="Lenarviricota">
      <score><val>-450</val></score>
-     <taxon><val href="2732406">2732406</val></taxon>
      <rank><val>phylum</val></rank>
-     <node name="Tolucaviricetes">
+     <count><val>1</val></count>
+     <taxon><val href="2732407">2732407</val></taxon>
+     <node name="Howeltoviricetes">
+      <taxon><val href="2732499">2732499</val></taxon>
       <count><val>1</val></count>
       <score><val>-450</val></score>
-      <taxon><val href="2732463">2732463</val></taxon>
       <rank><val>class</val></rank>
-      <node name="Tolivirales">
-       <count><val>1</val></count>
-       <score><val>-450</val></score>
-       <taxon><val href="2732548">2732548</val></taxon>
+      <node name="Cryppavirales">
+       <taxon><val href="2732503">2732503</val></taxon>
        <rank><val>order</val></rank>
-       <node name="Tombusviridae">
+       <score><val>-450</val></score>
+       <count><val>1</val></count>
+       <node name="Mitoviridae">
         <count><val>1</val></count>
         <score><val>-450</val></score>
-        <taxon><val href="39738">39738</val></taxon>
         <rank><val>family</val></rank>
-        <node name="Procedovirinae">
-         <count><val>1</val></count>
+        <taxon><val href="2732892">2732892</val></taxon>
+        <node name="Duamitovirus">
          <score><val>-450</val></score>
-         <taxon><val href="2560077">2560077</val></taxon>
-         <rank><val>subfamily</val></rank>
-         <node name="Alphacarmovirus">
-          <count><val>1</val></count>
+         <rank><val>genus</val></rank>
+         <count><val>1</val></count>
+         <taxon><val href="2948686">2948686</val></taxon>
+         <node name="Duamitovirus chqu1">
+          <rank><val>species</val></rank>
           <score><val>-450</val></score>
-          <taxon><val href="1911599">1911599</val></taxon>
-          <rank><val>genus</val></rank>
-          <node name="Pelargonium flower break virus">
-           <count><val>1</val></count>
-           <score><val>-450</val></score>
-           <taxon><val href="35291">35291</val></taxon>
+          <count><val>1</val></count>
+          <taxon><val href="2955775">2955775</val></taxon>
+          <node name="Chenopodium quinoa mitovirus 1">
            <members>
-            <vals><val>NODE_1_length_7714_cov_1139.211203</val></vals>
+            <vals><val>TRINITY_DN199_c0_g1_i2</val></vals>
            </members>
-           <rank><val>species</val></rank>
+           <count><val>1</val></count>
+           <rank><val>no rank</val></rank>
+           <score><val>-450</val></score>
+           <taxon><val href="2185087">2185087</val></taxon>
           </node>
          </node>
         </node>
@@ -6694,44 +6694,44 @@ function zoomOut()
       </node>
      </node>
     </node>
-    <node name="Lenarviricota">
-     <count><val>1</val></count>
-     <score><val>-450</val></score>
-     <taxon><val href="2732407">2732407</val></taxon>
+    <node name="Kitrinoviricota">
+     <count><val>4</val></count>
      <rank><val>phylum</val></rank>
-     <node name="Howeltoviricetes">
-      <count><val>1</val></count>
-      <score><val>-450</val></score>
-      <taxon><val href="2732499">2732499</val></taxon>
+     <score><val>-286.68</val></score>
+     <taxon><val href="2732406">2732406</val></taxon>
+     <node name="Tolucaviricetes">
+      <count><val>4</val></count>
       <rank><val>class</val></rank>
-      <node name="Cryppavirales">
-       <count><val>1</val></count>
-       <score><val>-450</val></score>
-       <taxon><val href="2732503">2732503</val></taxon>
+      <score><val>-286.68</val></score>
+      <taxon><val href="2732463">2732463</val></taxon>
+      <node name="Tolivirales">
        <rank><val>order</val></rank>
-       <node name="Mitoviridae">
-        <count><val>1</val></count>
-        <score><val>-450</val></score>
-        <taxon><val href="2732892">2732892</val></taxon>
+       <score><val>-286.68</val></score>
+       <count><val>4</val></count>
+       <taxon><val href="2732548">2732548</val></taxon>
+       <node name="Tombusviridae">
+        <taxon><val href="39738">39738</val></taxon>
+        <count><val>4</val></count>
         <rank><val>family</val></rank>
-        <node name="Mitovirus">
-         <count><val>1</val></count>
-         <score><val>-450</val></score>
-         <taxon><val href="186768">186768</val></taxon>
-         <rank><val>genus</val></rank>
-         <node name="unclassified Mitovirus">
-          <count><val>1</val></count>
-          <score><val>-450</val></score>
-          <taxon><val href="343865">343865</val></taxon>
-          <rank><val>no rank</val></rank>
-          <node name="Chenopodium quinoa mitovirus 1">
-           <count><val>1</val></count>
-           <score><val>-450</val></score>
-           <taxon><val href="2185087">2185087</val></taxon>
-           <members>
-            <vals><val>NODE_2_length_2692_cov_10.467512</val></vals>
-           </members>
+        <score><val>-286.68</val></score>
+        <node name="Procedovirinae">
+         <count><val>4</val></count>
+         <score><val>-286.68</val></score>
+         <rank><val>subfamily</val></rank>
+         <taxon><val href="2560077">2560077</val></taxon>
+         <node name="Alphacarmovirus">
+          <taxon><val href="1911599">1911599</val></taxon>
+          <count><val>4</val></count>
+          <rank><val>genus</val></rank>
+          <score><val>-286.68</val></score>
+          <node name="Pelargonium flower break virus">
+           <taxon><val href="35291">35291</val></taxon>
            <rank><val>species</val></rank>
+           <score><val>-286.68</val></score>
+           <count><val>4</val></count>
+           <members>
+            <vals><val>TRINITY_DN0_c0_g1_i9</val><val>TRINITY_DN0_c0_g1_i5</val><val>TRINITY_DN0_c0_g1_i7</val><val>TRINITY_DN0_c0_g1_i8</val></vals>
+           </members>
           </node>
          </node>
         </node>
