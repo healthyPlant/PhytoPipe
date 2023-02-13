@@ -280,3 +280,5 @@ echo "Trinity version"
 Trinity --version
 echo "Krona version"
 ls $SRC | grep Krona
+echo "EDirect version"
+esearch -h
