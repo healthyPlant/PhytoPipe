@@ -181,35 +181,58 @@ RUN wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast
     tar -xvzf ncbi-blast-2.13.0+-x64-linux.tar.gz
 RUN ln -s $SRC/ncbi-blast-2.13.0+/bin/* $BIN/.
 
-#install Diamond
-RUN apt-get -qq -y install diamond-aligner
+#install recent version Kraken2
+#sudo apt-get -qq -y install kraken2 #download library fail error, use git version
+RUN git clone https://github.com/DerrickWood/kraken2.git && \
+    cd kraken2 && \
+    ./install_kraken2.sh $SRC/kraken2.1.2 && \
+    cp $SRC/kraken2.1.2/kraken2{,-build,-inspect} $BIN/  && \
+    cd ..
 
 #install Bowtie2
-RUN apt-get -qq -y install bowtie2
+#sudo apt-get -qq -y install bowtie2
+RUN wget https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.4.2/bowtie2-2.4.2-sra-linux-x86_64.zip && \
+    unzip bowtie2-2.4.2-sra-linux-x86_64.zip  && \
+    mv bowtie2-2.4.2-sra-linux-x86_64 bowtie2-2.4.2  && \
+    sudo ln -s $SRC/bowtie2-2.4.2/bowtie2* $BIN/.
+
+#install bedtools
+#RUN apt-get -qq -y install bedtools
+RUN mkdir bedtools2 && \
+    cd bedtools2
+RUN wget https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools.static.binary  && \
+    mv bedtools.static.binary bedtools  && \
+    chmod a+x bedtools  && \
+    sudo ln -s $SRC/bedtools2/bedtools $BIN/bedtools  && \
+    cd ..  && \
+
+#install seqtk
+#RUN apt-get -qq -y install seqtk
+RUN git clone https://github.com/lh3/seqtk.git  && \
+    cd seqtk  && \
+    make  && \
+    sudo ln -s $SRC/seqtk/seqtk $BIN/seqtk  && \
+
+#install SPADes
+#RUN apt-get -qq -y install spades
+RUN wget http://cab.spbu.ru/files/release3.15.5/SPAdes-3.15.5-Linux.tar.gz && \
+    tar -xzf SPAdes-3.15.5-Linux.tar.gz  && \
+    sudo ln -s $SRC/SPAdes-3.15.5-Linux/bin/spades.py $BIN/spades.py
+
+#install Diamond
+RUN apt-get -qq -y install diamond-aligner
 
 #install biopython
 RUN pip install biopython
 
-#install bedtools
-RUN apt-get -qq -y install bedtools
-
-#install seqtk
-RUN apt-get -qq -y install seqtk
-
 #install Parallel
 RUN apt-get -qq -y install parallel
-
-#install SPADes
-RUN apt-get -qq -y install spades
-
-#install Kraken2
-RUN apt-get -qq -y install kraken2
 
 #install multiqc
 RUN pip install multiqc
 
 #install pandas
-RUN pip install pandas pysam
+RUN pip install pandas
 
 RUN apt-get -qq -y remove git && \
     apt-get -qq -y autoremove && \
@@ -225,17 +248,7 @@ RUN rm -rf $SRC/snakemake-7.18.0
 RUN rm -rf $SRC/autoconf-2.69
 RUN rm -rf $SRC/trinityrnaseq-v2.15.0
 RUN rm -rf $SRC/mummer-4.0.0rc1
-
-#install Entrez Direct (EDirect) 
-RUN wget ftp://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/edirect.tar.gz && \
-    gunzip -c edirect.tar.gz | tar xf -
-RUN cd $SRC/edirect && \
-    wget ftp://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/xtract.Linux.gz && \
-    gunzip -f xtract.Linux.gz && \
-    chmod +x xtract.Linux && \
-    cd ..
-RUN find $SRC/edirect -type f -executable -exec ln -s {} $BIN/ \;
-
+RUN rm -rf $SRC/kraken2
 
 # some cleanup
 WORKDIR $SRC

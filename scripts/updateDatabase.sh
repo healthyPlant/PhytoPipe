@@ -24,17 +24,12 @@ pv_taxonFile=$phytopipe_dir/db/plantvirus_taxon.txt
 excludeSeqId=$phytopipe_dir/db/unwantedSeqId.txt
 
 krakendb0=$mydb/kraken_db
-kaijudb0=$mydb/kaiju_db
 
 if [ -d $krakendb ]; then 
     echo "$krakendb exists, we will build Kraken2 database under a new directory $krakendb.1"
     echo "After you test the new $krakendb.1, you can rename it by running \"mv $krakendb.1 $krakendb\" "
 fi
 
-if [ -d $kaijudb ]; then 
-    echo "$kaijudb exists, we will build Kaiju database under a new directory $kaijudb.1"
-    echo "After you test the new $kaijudb.1, you can rename it by running \"mv $kaijudb.1 $kaijudb\" "
-fi
 
 echo "#*****************************"
 echo "Check programs"
@@ -75,9 +70,6 @@ fi
 #Kaiju db directory
 if [ ! -d $kaijudb ]; then 
     mkdir -p $kaijudb 
-else
-    mkdir -p $kaijudb.1
-    kaijudb=$kaijudb.1
 fi
 #NCBI taxonomy db directory 
 if [ ! -d $taxondb ]; then 
@@ -89,11 +81,11 @@ if [ ! -d $rrnadb ]; then
 fi
 #*****************************************
 #Build or update databases
-
+echo "#*****************************"
 echo "#1. build Kraken2 db"
 cd $krakendb
 echo "kraken2-build --download-taxonomy --threads 16 --db $krakendb"
-kraken2-build --download-taxonomy --threads 16 --db $krakendb
+#kraken2-build --download-taxonomy --threads 16 --db $krakendb
 echo "kraken2-build --download-library nt --db $krakendb"
 kraken2-build --download-library nt --db $krakendb
 echo "kraken2-build --build --threads 16 --db $krakendb &"
@@ -104,9 +96,9 @@ PID_kraken2=$!
 #**********************************************
 echo "#2. build Kaiju db"
 cd $kaijudb
-echo "kaiju-makedb -s nr_euk &"
+echo "kaiju-makedb -t 16 -s nr_euk &"
 echo "kaiju-makedb is running in the background and may take several days."
-kaiju-makedb -s nr_euk &
+kaiju-makedb -t 16 -s nr_euk &
 PID_kaiju=$!
 
 #**********************************************
@@ -118,7 +110,7 @@ update_blastdb.pl --decompress --force nt
 #*****************************************
 echo "#4. update NCBI nr diamond format"
 cd $ncbi
-wget ftp://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/nr.gz
+wget -q --show-progress ftp://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/nr.gz
 echo "diamond makedb --in nr.gz -d nr"
 diamond makedb --in nr.gz -d nr
 
@@ -132,34 +124,36 @@ updateAccessions.sh
 #*****************************************
 echo "#6. download NCBI taxonomy db"
 cd $taxondb
-echo "cp $kaijudb/*.dmp $taxondb/"
-if [ -s $kaijudb/nodes.dmp ]; then
-    cp $kaijudb/*.dmp $taxondb/
-else
-    wget https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
-    tar -xvzf taxdump.tar.gz
-fi
 
 echo "cp $kaijudb/nr_euk/prot.accession2taxid $taxondb/"
-if [-s $kaijudb/nr_euk/prot.accession2taxid ]; then
+if [ -f $kaijudb/nr_euk/prot.accession2taxid ]; then
     cp $kaijudb/nr_euk/prot.accession2taxid $taxondb/
 else
-    wget https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+    wget -q --show-progress https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
     gunzip prot.accession2taxid.gz
 fi
 
-echo "cp $krakendb/nucl_gb.accession2taxid $taxondb/"
-if [-s $krakendb/nucl_gb.accession2taxid ]; then
-    cp $krakendb/nucl_gb.accession2taxid $taxondb/
+echo "cp $krakendb/taxonomy/*.dmp $taxondb/"
+if [[ -f $krakendb/taxonomy/nodes.dmp && -f $krakendb/taxonomy/names.dmp ]]; then
+    cp $krakendb/taxonomy/nodes.dmp $taxondb/
+    cp $krakendb/taxonomy/names.dmp $taxondb/
 else
-    wget https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz
+    wget -q --show-progress https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
+    tar -xvzf taxdump.tar.gz
+fi
+
+echo "cp $krakendb/taxonomy/nucl_gb.accession2taxid $taxondb/"
+if [ -f $krakendb/taxonomy/nucl_gb.accession2taxid ]; then
+    cp $krakendb/taxonomy/nucl_gb.accession2taxid $taxondb/
+else
+    wget -q --show-progress https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz
     gunzip nucl_gb.accession2taxid.gz
 fi
 
 #*****************************************
 echo "#7. build viral reference blastn db"
 cd $ncbi
-wget -r -nd -np -A '*.genomic.fna.gz' ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral
+wget -q --show-progress -r -nd -np -A '*.genomic.fna.gz' ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral
 zcat viral.*.genomic.fna.gz > refseq_viral_genomic.fa
 echo "makeblastdb -in refseq_viral_genomic.fa -dbtype nucl"
 makeblastdb -in refseq_viral_genomic.fa -dbtype nucl
@@ -216,7 +210,7 @@ rm -f kaiju.out
 #*****************************************
 echo "#9. Download Reference Viral Database (RVDB-prot) and build diamond format db"
 cd $ncbi
-wget https://rvdb-prot.pasteur.fr/files/U-RVDB"$rvdb_version"-prot.fasta.xz  #v25.0
+wget -q --show-progress https://rvdb-prot.pasteur.fr/files/U-RVDB"$rvdb_version"-prot.fasta.xz  #v25.0
 xz --decompress U-RVDB"$rvdb_version"-prot.fasta.xz
 if [ -s RVDB.fasta ]; then
     rm -rf RVDB.fasta
@@ -225,7 +219,7 @@ ln -s U-RVDB"$rvdb_version"-prot.fasta RVDB.fasta
 echo "diamond makedb --in RVDB.fasta -d rvdb"
 diamond makedb --in RVDB.fasta -d rvdb
 
-#<<comment
+
 cd $taxondb
 #get RVDB accession taxonomy using kaiju-addTaxonNames
 grep ">" $ncbi/RVDB.fasta | cut -d "|" -f 3 > RVDB-prot.id.txt
@@ -242,8 +236,8 @@ rm -f RVDB-prot.kaiju.out
 echo "#10. download Eukaryote ribosomal RNA database"
 cd $rrnadb
 if [ ! -s silva-euk_combined_rRNA.fasta ]; then
-    wget https://github.com/biocore/sortmerna/raw/master/data/rRNA_databases/silva-euk-18s-id95.fasta
-    wget https://github.com/biocore/sortmerna/raw/master/data/rRNA_databases/silva-euk-28s-id98.fasta
+    wget -q --show-progress https://github.com/biocore/sortmerna/raw/master/data/rRNA_databases/silva-euk-18s-id95.fasta
+    wget -q --show-progress https://github.com/biocore/sortmerna/raw/master/data/rRNA_databases/silva-euk-28s-id98.fasta
     cat silva-euk-* > silva-euk_combined_rRNA.fasta
 fi
 
@@ -256,17 +250,35 @@ get_species_taxids.sh -t 4751 > fungi.tids
 get_species_taxids.sh -t 4762 > oomycetes.tids
 cat fungi.tids bacteria.tids viruses.tids oomycetes.tids > microbial.tids
 
-
 wait $PID_kraken2
 echo "Kraken2 database building has finished."
 wait $PID_kaiju
 echo "Kaiju database building has finished."
-#comment
 
-echo "All databases are built."
+#Clean up
+rm -rf $ncbi/*.gz
+rm -rf $taxondb/*.gz
+if [ -s $krakendb/hash.k2d ]; then
+    echo "Kraken2 database building succeeded."
+    rm -rf $krakendb/library
+    rm -rf $krakendb/taxonomy
+else
+    echo "Kraken2 database building failed, please build it following the Kraken2 manual."
+fi
+if [ -s $kaijudb/nr_euk/kaiju_db_nr_euk.fmi ]; then
+    echo "Kaiju database building succeeded."
+    mv $kaijudb/nr_euk/kaiju_db_nr_euk.fmi $kaijudb/
+    rm -rf $kaijudb/nr_euk
+    rm -rf $kaijudb/taxdump.tar.gz
+else
+    echo "Kaiju database building failed, please build it following the Kaiju manual."
+fi
+
+echo "Database building has finished."
+echo "#*****************************************************"
 echo "Please update database paths in the config.yaml"
-echo "krakenDb: $krakendb0"
-echo "kaijuDb: $kaijudb0/kaiju_db_nr_euk.fmi"
+echo "krakenDb: $krakendb"
+echo "kaijuDb: $kaijudb/kaiju_db_nr_euk.fmi"
 echo "blastnDb: $ncbi_nt/nt"
 echo "blastxDb: $ncbi/nr.dmnd"
 echo "#blastnViralDb: $ncbi/refseq_viral_genomic.fa"
