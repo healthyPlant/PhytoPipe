@@ -10,7 +10,7 @@ PhytoPipe is an open-source bioinformatics pipeline for plant pathogen detection
 
 1. Convert Blc to FastQ files ([`bcl2fastq`](https://support.illumina.com/sequencing/sequencing_software/bcl2fastq-conversion-software.html), *optional*)
 2. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-3. Read precprocessing
+3. Read preprocessing
 	1. Host ribosomal RNA removal (*bbduk.sh* in [`BBTools`](https://jgi.doe.gov/data-and-tools/software-tools/bbtools/))
 	2. PCR duplicates removal (*clumpify.sh* in [`BBTools`](https://jgi.doe.gov/data-and-tools/software-tools/bbtools/))
 	3. Control/spike-in removal (*bbsplit.sh* in [`BBTools`](https://jgi.doe.gov/data-and-tools/software-tools/bbtools/))
