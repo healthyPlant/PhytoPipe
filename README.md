@@ -37,53 +37,35 @@ PhytoPipe is an open-source bioinformatics pipeline for plant pathogen detection
 ## Quick start
 ### Installation
 
-Clone the repository:
+For Linux or Mac system, you can download our codes or clone the repository using Git:
 ```
-cd /path/to/softare
+cd /path/to/software
 git clone https://github.com/healthyPlant/PhytoPipe.git
 ```
-Then you can install dependencies,
-#### Option 1: in a conda environment
+Then you can install dependencies.
 
-Create the phytopipe conda environment:
-
-`conda create -n phytopipe python=3.7`
-
-Then install required tools following [PhytoPipe wiki](https://github.com/healthyPlant/PhytoPipe/wiki#dependencies).
-
-Or create the environment with installing tools by conda:
-
-`conda env create -f [PhytoPipe]/environment.yaml`
-
-Activate the environment:
-
-`conda activate phytopipe`
-
-To quit the Phytopipe environment:
-
-`conda deactivate phytopipe`
-
-If you want to remove PhytoPipe, simply type the following command,
-
-`conda env remove --name phytopipe`
-
-#### Option 2: in a normal Linux environment
-To install all tools in a Ubuntu system, run
+To install all tools in a Ubuntu system, simply run
 ```
 sudo bash /path/to/PhytoPipe/scripts/installTools.sh /path/to/softare/folder
 ```
+For other Linux or Mac system, please follow [PhytoPipe wiki](https://github.com/healthyPlant/PhytoPipe/wiki#dependencies).
+
+For Windows system, please use [PhytoPipe docker image](https://hub.docker.com/r/xhu556/phytopipe).
+
+***Since some tools conflict in a conda environment and hard to update, we do not recommend conda.***
+
 ### Build databases
-To install/update all databases, run
+To install/update all databases, simply run
 ```
 nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/PhytoPipe /path/to/my/database v25.0 &
 ```
-v25.0 is the RVDB version. Please find the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the absolute path in the command.
+v25.0 is the RVDB version. Please find the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the full path in the command.
 
 ### Set up configuration
 Customize the workflow based on your need in `config.yaml`, such as your sequence file extension and database paths. Please see the details in [wiki](https://github.com/healthyPlant/PhytoPipe/wiki).
 
 ### Run PhytoPipe
-Please check [dependencies and databases requirements](https://github.com/healthyPlant/PhytoPipe/wiki), if they are met, then you can run PhytoPipe
+Please check [dependencies and databases requirements](https://github.com/healthyPlant/PhytoPipe/wiki) first, if they are met, then you can run PhytoPipe
 
 For fastq.gz reads input dry-run:
 ```shell
@@ -95,13 +77,13 @@ For raw Illumina flowcell's data input dry-run:
 $ snakemake  --configfile /path/to/PhytoPipe/config.yaml -s /path/to/PhytoPipe/Snakefile --config workDir=/path/to/output/folder flowCellDir=/path/to/Illumina/run --cores [number of cores ex. 16] -n
 ```
 
-If dry-run (-n) succeeds, please remove '-n' parameter to run the pipeline. If you'd like to run it in the background, please use 'nohup' and '&'. For example:
+If dry-run (-n) succeeds, please remove '-n' parameter to run the pipeline. If you'd like to run it in the background, please use 'nohup'. For example:
 ```shell
 $ nohup snakemake  --configfile /path/to/PhytoPipe/config.yaml -s /path/to/PhytoPipe/Snakefile --config workDir=/path/to/output/folder fastqDir=/path/to/input/fastq/folder --cores [number of cores ex. 16] &
 ```
 **Important:** For workDir and fastqDir paths, full paths must be used.
 
-You can view progress or errors in the file 'nohup.out'
+You can view progress or errors in the file 'nohup.out' by the command
 
 `more nohup.out`
 
