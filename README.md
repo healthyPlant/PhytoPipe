@@ -37,18 +37,18 @@ PhytoPipe is an open-source bioinformatics pipeline for plant pathogen detection
 ## Quick start
 ### Installation
 
-For Linux or Mac system, you can download our codes or clone the repository using Git:
+For a Linux or Mac system, you can download our codes or clone the repository using Git:
 ```
 cd /path/to/software
 git clone https://github.com/healthyPlant/PhytoPipe.git
 ```
 Then you can install dependencies.
 
-To install all tools in a Ubuntu system, simply run
+To install them in a Ubuntu system, simply run
 ```
-sudo bash /path/to/PhytoPipe/scripts/installTools.sh /path/to/softare/folder
+sudo bash /path/to/PhytoPipe/scripts/installTools.sh /path/to/softare
 ```
-For other Linux or Mac system, please follow [PhytoPipe wiki](https://github.com/healthyPlant/PhytoPipe/wiki#dependencies).
+For other Linux or Mac systems, please follow [PhytoPipe wiki](https://github.com/healthyPlant/PhytoPipe/wiki#dependencies).
 
 For Windows system, please use [PhytoPipe docker image](https://hub.docker.com/r/xhu556/phytopipe).
 
@@ -57,7 +57,7 @@ For Windows system, please use [PhytoPipe docker image](https://hub.docker.com/r
 ### Build databases
 To install/update all databases, simply run
 ```
-nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/PhytoPipe /path/to/my/database v25.0 &
+nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/software/PhytoPipe /path/to/my/database v25.0 &
 ```
 v25.0 is the RVDB version. Please find the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the full path in the command.
 
@@ -95,7 +95,7 @@ After software and databases are ready, you can run a quick test using the data 
 ```
 docker pull xhu556/phytopipe
 ```
-Docker can avoid the software installation. You can use the docker image on many systems (Linux, MAC, Windows). PhytoPipe docker image usage is in its [docker README](https://hub.docker.com/r/xhu556/phytopipe). PhytoPipe docker tutorial can be found in [test docker](test/PhytoPipe_docker_tutorial.ipynb).
+Docker can avoid the software installation. You can use the docker image on many systems (Linux, Mac, Windows). PhytoPipe docker image usage is in its [docker README](https://hub.docker.com/r/xhu556/phytopipe). PhytoPipe docker tutorial can be found in [test docker](test/PhytoPipe_docker_tutorial.ipynb).
 
 # Documentation
 
