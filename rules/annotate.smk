@@ -84,16 +84,9 @@ rule run_blastnt:
 	"""
 	input:
 		contigs = annotateDir + "/{sample}.contigs.l200.fasta",
-		krakenReport = krakenDir + "/{sample}.kraken2.report.txt",
 		microbialTids = microbialTaxonIds
 	output:
-		blastntOut0 = temp(annotateDir + "/{sample}.blastnt0.txt"),
-		blastntOut1 = temp(annotateDir + "/{sample}.blastnt1.txt"),
-		acc_list = temp(annotateDir + "/{sample}.blastnt.acc_list.txt"),
-		acc_ti = temp(annotateDir + "/{sample}.blastnt.acc_ti.txt"),
-		blastntOut = annotateDir + "/{sample}.blastnt.txt",  #blast NCBI all nt
-		blastntKrona = annotateDir + "/{sample}.blastnt.krona.html"
-
+		blastntOut = temp(annotateDir + "/{sample}.blastnt0.txt")  #blast NCBI all nt
 	message:
 		'''--- annotatate {wildcards.sample} contigs using blastn against NCBI nt.'''
 	params:
@@ -103,18 +96,41 @@ rule run_blastnt:
 		logDir + "/annotate/{sample}.blastnt.log"
 	shell:
 		"""
-		blastn -db {nt} -num_threads {threads} -query {input.contigs} -out {output.blastntOut0} -taxidlist {input.microbialTids} {params} &>> {log}
+		blastn -db {nt} -num_threads {threads} -query {input.contigs} -out {output.blastntOut} -taxidlist {input.microbialTids} {params} &>> {log} || true 
+		"""
+
+rule summarize_blastnt:
+	"""
+	Annotate contigs by blastn againt NCBI nt
+	"""
+	input:
+		contigs = annotateDir + "/{sample}.contigs.l200.fasta",
+		krakenReport = krakenDir + "/{sample}.kraken2.report.txt",
+		blastntOut0 = annotateDir + "/{sample}.blastnt0.txt",
+	output:
+		blastntOut1 = temp(annotateDir + "/{sample}.blastnt1.txt"),
+		acc_list = temp(annotateDir + "/{sample}.blastnt.acc_list.txt"),
+		acc_ti = temp(annotateDir + "/{sample}.blastnt.acc_ti.txt"),
+		blastntOut = annotateDir + "/{sample}.blastnt.txt",  #blast NCBI all nt
+		blastntKrona = annotateDir + "/{sample}.blastnt.krona.html",
+		blastntSummary = annotateDir + "/{sample}.blastnt.summary.txt"
+	message:
+		'''--- summarize {wildcards.sample} contigs blastnt result.'''
+	log:
+		logDir + "/annotate/{sample}.summarizeBlastnt.log"
+	shell:
+		"""
 		#get taxon id (ti) for subjects in blastnt result
-		cut -f2 {output.blastntOut0} | uniq > {output.acc_list}
+		cut -f2 {input.blastntOut0} | uniq > {output.acc_list}
 		#Add " || true " to output errors to the output file, otherwise bash strict mode cause exit
 		blastdbcmd -db {nt} -entry_batch {output.acc_list} -outfmt "%i %T"  > {output.acc_ti} || true 
 		#add kraken2 report to the blastnt result
-		python {scripts_dir}/mergeBlastnKraken.py -b {output.blastntOut0} -k {input.krakenReport} -a {output.acc_ti} -c {input.contigs} -o {output.blastntOut}
+		python {scripts_dir}/mergeBlastnKraken.py -b {input.blastntOut0} -k {input.krakenReport} -a {output.acc_ti} -c {input.contigs} -o {output.blastntOut}
+		python {scripts_dir}/summarizeBlast.py {output.blastntOut} {output.blastntSummary} 
 		#classify blast
-		awk -F "\t" 'OFS="\t" {{ if($11 < 1e-20) print }}' {output.blastntOut0} | sort -k 11,11g  | head -10000 > {output.blastntOut1}
-		ktImportBLAST -o {output.blastntKrona} {output.blastntOut1}
+		awk -F "\\t" 'OFS="\\t" {{ if($11 < 1e-20) print }}' {input.blastntOut0} | sort -k 11,11g  | head -10000 > {output.blastntOut1} || true 
+		ktImportBLAST -o {output.blastntKrona} {output.blastntOut1} &>> {log} || true 
 		"""
-
 
 rule run_blastnr:
 	"""
@@ -122,13 +138,8 @@ rule run_blastnr:
 	"""
 	input:
 		contigs = annotateDir + "/{sample}.contigs.l200.fasta",
-		kaijuTable = krakenDir + "/{sample}.kaiju.table.txt",
 	output:
-		blastnrOut0 = temp(annotateDir + "/{sample}.blastnr0.txt"),
-		blastnrOut1 = temp(annotateDir + "/{sample}.blastnr1.txt"),
-		blastnrOut = annotateDir + "/{sample}.blastnr.txt",  #blast NCBI all nr
-		blastnrKrona = annotateDir + "/{sample}.blastnr.krona.html"
-		
+		blastnrOut = temp(annotateDir + "/{sample}.blastnr0.txt"),
 	message:
 		'''--- annotatate {wildcards.sample} contigs using blastx against NCBI nr'''
 	params:
@@ -138,10 +149,32 @@ rule run_blastnr:
 		logDir + "/annotate/{sample}.blastnr.log"
 	shell:
 		"""
-		diamond blastx -d {nr} -q {input.contigs} -p {threads} -o {output.blastnrOut0} {params} &>> {log}
+		diamond blastx -d {nr} -q {input.contigs} -p {threads} -o {output.blastnrOut} {params} &>> {log}
+		"""
+
+rule summarize_blastnr:
+	"""
+	Annotate contigs by blastx through diamond againt NCBI nr
+	"""
+	input:
+		contigs = annotateDir + "/{sample}.contigs.l200.fasta",
+		kaijuTable = krakenDir + "/{sample}.kaiju.table.txt",
+		blastnrOut0 = annotateDir + "/{sample}.blastnr0.txt",
+	output:
+		blastnrOut1 = temp(annotateDir + "/{sample}.blastnr1.txt"),
+		blastnrOut = annotateDir + "/{sample}.blastnr.txt",  #blast NCBI all nr
+		blastnrKrona = annotateDir + "/{sample}.blastnr.krona.html",
+		blastnrSummary = annotateDir + "/{sample}.blastnr.summary.txt"
+	message:
+		'''--- summarize {wildcards.sample} contigs blastnr results'''
+	log:
+		logDir + "/annotate/{sample}.summarizeBlastnr.log"
+	shell:
+		"""
 		#add kaiju report to the blastnr result
-		python {scripts_dir}/mergeBlastxKaiju.py -b {output.blastnrOut0} -k {input.kaijuTable} -c {input.contigs} -o {output.blastnrOut}
+		python {scripts_dir}/mergeBlastxKaiju.py -b {input.blastnrOut0} -k {input.kaijuTable} -c {input.contigs} -o {output.blastnrOut}
+		python {scripts_dir}/summarizeBlast.py {output.blastnrOut} {output.blastnrSummary} 
 		#classify blast
-		awk -F "\t" 'OFS="\t" {{ if($11 < 1e-20) print }}' {output.blastnrOut0} | sort -k 11,11g | head -10000 > {output.blastnrOut1}
-		ktImportBLAST -o {output.blastnrKrona} {output.blastnrOut1}
+		awk -F "\\t" 'OFS="\\t" {{ if($11 < 1e-20) print }}' {input.blastnrOut0} | sort -k 11,11g | head -10000 > {output.blastnrOut1} || true
+		ktImportBLAST -o {output.blastnrKrona} {output.blastnrOut1} &>> {log} || true 
 		"""
