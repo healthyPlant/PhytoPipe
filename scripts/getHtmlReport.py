@@ -38,6 +38,28 @@ def getMonitorPathogen(mpFile):
             mpDict[cells[0]] = cells[1]
     return mpDict
 
+def getTopFive(numberDict, lineDict, top5=True):
+    """
+    Get top five pathogens according to the classified read number
+    numberDict has read number for each pathogen: cells[2](read number)
+    lineDict has classfied information: [cells[0](percent),cells[2](read number),cells[4](taxid),cells[5](taxon name),'Bacteria'(pathogen type)]
+    Both dicts have the same key (row numbr)
+    """
+    #reverse sort read number, return sorted keys by values
+    sortedKeys = sorted(numberDict, key = numberDict.get, reverse=True) #return a list, keys sorted by values
+    orderedLine = []
+    count = 0
+    for key in sortedKeys:
+        if top5:
+            if count < 5:
+                orderedLine.append(lineDict[key])
+                count += 1
+        else:
+            orderedLine.append(lineDict[key])
+    #print(top5)
+    return orderedLine
+
+
 def extractKraken(kFile, mpFile):
     """
     Extract unclassified (0), Eukaryota (2759), Bacteria (2), Viruses(10239), Fungi (4751), Oomycetes(4762)
@@ -51,7 +73,15 @@ def extractKraken(kFile, mpFile):
     if os.path.exists(mpFile):
         mpDict = getMonitorPathogen(mpFile) #get monitor pathogens
 
-    bcount = fcount = ccount = 5 #limit display top 5 species for Bacteria, Fungi and Oomycetes
+    virusNumberDict = {}
+    virusLineDict = {}
+    #limit display top 5 species for Bacteria, Fungi and Oomycetes
+    fungiNumberDict = {}
+    fungiLineDict = {}
+    bacteriaNumberDict = {}
+    bacteriaLineDict = {}
+    oomycetesNumberDict = {}
+    oomycetesLineDict = {}
 
     #initial kDict
     for key in ['Eukaryota', 'Bacteria', 'Viruses', 'Fungi', 'Oomycetes']:
@@ -60,9 +90,11 @@ def extractKraken(kFile, mpFile):
     kraken = []
     eFlag = bFlag = vFlag = fFlag = oFlag = 0
     ecount = 0
+    lineNumber = 0
     with open(kFile) as f:
         for line in f:
             line = line.rstrip()
+            lineNumber += 1
             #cells = line.split("\t")
             cells = list(map(str.strip, line.split("\t")))
             if cells[5] == 'uncultured organism':
@@ -82,37 +114,38 @@ def extractKraken(kFile, mpFile):
                 elif float(cells[0]) > 5.0: #keep >5% Eukaryota species (host)
                     kDict['Eukaryota'].append([cells[0],cells[2],cells[4],cells[5],'Eukaryota'])
 
-            if cells[4] == '4751':
+            if cells[4] == '4751': #Fungi
                 fFlag = 1
                 eFlag = bFlag = vFlag = oFlag = 0
                 continue
             if fFlag == 1 and cells[3].startswith('S') and 'uncultured' not in cells[5]: 
-                if (cells[4] in mpDict and float(cells[2]) > 100) or (float(cells[2]) > 1000 and fcount > 0): #keep read >1000 species
-                    kDict['Fungi'].append([cells[0],cells[2],cells[4],cells[5],'Fungi'])
-                    fcount -= 1
+                if (cells[4] in mpDict and float(cells[2]) > 100) or (float(cells[2]) > 1000): #keep read >1000 species
+                    fungiNumberDict[lineNumber] = int(cells[2])
+                    fungiLineDict[lineNumber] = [cells[0],cells[2],cells[4],cells[5],'Fungi']
                 
-            if cells[4] == '2':
+            if cells[4] == '2': #Bacteria
                 bFlag = 1
                 eFlag = vFlag = fFlag = oFlag = 0
                 continue
             if bFlag == 1 and cells[3].startswith('S') and 'uncultured' not in cells[5]:
-                if float(cells[2]) > 1000 and bcount > 0: #keep read >1000 species
-                    kDict['Bacteria'].append([cells[0],cells[2],cells[4],cells[5],'Bacteria'])
-                    bcount -= 1
+                if float(cells[2]) > 1000: #keep read >1000 species
+                    bacteriaNumberDict[lineNumber] = int(cells[2])
+                    bacteriaLineDict[lineNumber] = [cells[0],cells[2],cells[4],cells[5],'Bacteria']
+
                 elif 'Candidatus Phytoplasma' in cells[5] and float(cells[2]) > 20: #keep read >20 for Phytoplasma
                     #report Candidatus Phytoplasma
                     kDict['Bacteria'].append([cells[0],cells[2],cells[4],cells[5],'Bacteria'])
                 elif cells[4] in mpDict and float(cells[2]) > 100:
                     kDict['Bacteria'].append([cells[0],cells[2],cells[4],cells[5],'Bacteria'])
                 
-            if cells[4] == '4762':
+            if cells[4] == '4762': #Oomycetes
                 oFlag = 1
                 eFlag = bFlag = vFlag = fFlag = 0
                 continue    
             if oFlag == 1 and cells[3].startswith('S'): 
-                if (cells[4] in mpDict and float(cells[2]) > 100) or (float(cells[2]) > 1000 and ccount > 0): #keep read >1000 species
-                    kDict['Oomycetes'].append([cells[0],cells[2],cells[4],cells[5],'Oomycetes'])
-                    ccount -= 1
+                if (cells[4] in mpDict and float(cells[2]) > 100) or (float(cells[2]) > 1000): #keep read >1000 species
+                    oomycetesNumberDict[lineNumber] = int(cells[2])
+                    oomycetesLineDict[lineNumber] = [cells[0],cells[2],cells[4],cells[5],'Oomycetes']
                 
             if cells[4] == '10239':
                 vFlag = 1
@@ -120,9 +153,21 @@ def extractKraken(kFile, mpFile):
                 continue    
             if vFlag == 1 and cells[3].startswith('S') and 'synthetic construct' not in cells[5]: #keep read >100 species
                 if (cells[4] in mpDict and float(cells[2]) > 10) or float(cells[2]) > viral_cutoff: 
-                    kDict['Viruses'].append([cells[0],cells[2],cells[4], cells[5],'Viruses'])
+                    #kDict['Viruses'].append([cells[0],cells[2],cells[4], cells[5],'Viruses'])
+                    virusNumberDict[lineNumber] = int(cells[2])
+                    virusLineDict[lineNumber] = [cells[0],cells[2],cells[4],cells[5],'Viruses']
+
             
-                
+    #Get the top 5 hightest read number of pathogens 
+    fungiTop5 = getTopFive(fungiNumberDict,fungiLineDict)
+    bacteriaTop5 = getTopFive(bacteriaNumberDict,bacteriaLineDict)
+    oomycetesTop5 = getTopFive(oomycetesNumberDict, oomycetesLineDict)
+    virusTop = getTopFive(virusNumberDict, virusLineDict, top5=False) #output sorted viruses
+    kDict['Fungi'] = fungiTop5
+    kDict['Bacteria'].extend(bacteriaTop5)
+    kDict['Oomycetes'] = oomycetesTop5
+    kDict['Viruses'] = virusTop
+    
     for key in ['Eukaryota', 'Bacteria', 'Viruses', 'Fungi', 'Oomycetes']:
         if kDict[key]:
             kraken.extend(kDict[key])

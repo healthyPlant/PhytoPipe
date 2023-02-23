@@ -53,7 +53,6 @@ rule blastn_local:
 		#create empty files in case no virus found in sample
 		touch {output.consensusFile}
 		touch {output.blastnResult}
-		
 		#combine all final consensus/contig to a file
 		if [ ! -d  {reportDir}/ncbiBlast ]; then
 			mkdir -p {reportDir}/ncbiBlast
@@ -86,12 +85,19 @@ rule blastn_local:
 			for contig in `ls $inputPath/*.contig.fasta` 
 			do
 				refName=$(basename $contig '.contig.fasta')  #remove '.contig.fasta'
-				#change sequence title and add it if the contig is not in the file
-				if ! cat {output.consensusFile} | grep -q $refName; then  
+				#if the contig is in the file, replace it using the contig from the final assembly
+				repName=$(cat {output.consensusFile} | grep $refName | cut -d' ' -f1 | sed 's/>//')
+				echo $repName
+				if [ ! -z $repName ]; then 
+					filterbyname.sh in={output.consensusFile} out=temp.fa names=$repName include=f  #remove the contig by its name
+					mv temp.fa {output.consensusFile}
 					sed "1s/^.*$/>{params.smpName}.$refName.contig/" "$contig" >> {output.consensusFile}  #give the sequence new title (sampleName.reference name)
+					rm -rf temp.fa
 				fi
 			done
+			
 		fi
+		
 
 		#run blastn against local NCBI nt database
 		if [ -f {output.consensusFile} ] && [ -s  {output.consensusFile} ]; then
@@ -171,6 +177,8 @@ rule generate_htmlReport:
 		if [[ $found >0 ]]; then
 			cp {workDir}/annotation/*.blastnt.txt {reportDir}/blastnx/
 			cp {workDir}/annotation/*.blastnr.txt {reportDir}/blastnx/
+			cp {workDir}/annotation/*.blastnt.summary.txt {reportDir}/blastnx/
+			cp {workDir}/annotation/*.blastnr.summary.txt{reportDir}/blastnx/
 		fi
 
 		#generate a html report
