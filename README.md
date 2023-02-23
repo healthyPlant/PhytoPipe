@@ -50,9 +50,9 @@ sudo bash /path/to/PhytoPipe/scripts/installTools.sh /path/to/softare
 ```
 For other Linux or Mac systems, please follow [PhytoPipe wiki](https://github.com/healthyPlant/PhytoPipe/wiki#dependencies).
 
-Fora  Windows system, please use [PhytoPipe docker image](https://hub.docker.com/r/xhu556/phytopipe).
+For a  Windows system, please use [PhytoPipe docker image](https://hub.docker.com/r/xhu556/phytopipe).
 
-***Since some tools conflict in a conda environment and are hard to update, we do not recommend conda.***
+***Since some tools conflict in a conda environment and are hard to update, we do not recommend to install all dependencies using conda.***
 
 ### Build databases
 To install/update all databases, simply run
