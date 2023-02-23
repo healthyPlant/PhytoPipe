@@ -12,7 +12,7 @@ sudo apt-get -qq -y install git curl wget unzip make apt-utils default-jdk build
 #Geographic area: 2
 #Time zone: 106
 
-sudo apt-get -qq -y install python3-dev python3-pip python3-versioneer python3-matplotlib
+sudo apt-get -qq -y install python3-dev python3-pip python3-versioneer
 #rename python3
 #sudo apt-get update && sudo apt-get -qq -y install python3
 #sudo ln -sf /bin/python3 /bin/python
@@ -206,11 +206,17 @@ sudo ln -s $SRC/bwa/bwa $BIN/bwa
 
 #install Diamond
 #https://diamond.readthedocs.io/en/latest/Getting-Started/Installation/
-sudo apt-get -qq -y install diamond-aligner
+#sudo apt-get -qq -y install diamond-aligner
+wget https://github.com/bbuchfink/diamond/releases/download/v2.1.1/diamond-linux64.tar.gz
+tar -xvzf diamond-linux64.tar.gz
+mkdir diamond2.1.1
+mv diamond diamond2.1.1/
+sudo ln -s $SRC/diamond2.1.1/diamond $BIN/diamond
+
 
 #install pandas
 sudo pip install pandas
-#install psam
+#install pysam
 sudo pip install pysam
 #install matplotlib
 sudo pip install matplotlib
