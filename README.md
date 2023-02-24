@@ -37,35 +37,34 @@ PhytoPipe is an open-source bioinformatics pipeline for plant pathogen detection
 ## Quick start
 ### Installation
 
-For a Linux or Mac system, you can download our codes or clone the repository using Git:
+For a Windows system, please use [PhytoPipe docker image](https://hub.docker.com/r/xhu556/phytopipe) to download our code and install dependencies.
+
+For a Linux or Mac system, you can download our code or clone the repository using Git:
 ```
 cd /path/to/software
 git clone https://github.com/healthyPlant/PhytoPipe.git
 ```
-Then you can install dependencies.
 
-To install them in a Ubuntu system, simply run
+Then, to install dependencies in an Ubuntu system, simply run
 ```
-sudo bash /path/to/PhytoPipe/scripts/installTools.sh /path/to/softare
+sudo bash /path/to/PhytoPipe/scripts/installTools.sh /path/to/software
 ```
-For other Linux or Mac systems, please follow [PhytoPipe wiki](https://github.com/healthyPlant/PhytoPipe/wiki#dependencies).
+For other Linux or Mac systems, please follow [PhytoPipe wiki](https://github.com/healthyPlant/PhytoPipe/wiki#dependencies) to install dependencies.
 
-Fora  Windows system, please use [PhytoPipe docker image](https://hub.docker.com/r/xhu556/phytopipe).
-
-***Since some tools conflict in a conda environment and are hard to update, we do not recommend conda.***
+***Since some tools conflict in a conda environment and are hard to update, we do not recommend installing all dependencies using conda.***
 
 ### Build databases
 To install/update all databases, simply run
 ```
-nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/software/PhytoPipe /path/to/my/database v25.0 &
+nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/software/PhytoPipe /path/to/RVDB/database v25.0 &
 ```
-v25.0 is the RVDB version. Please find the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the full path in the command.
+Please find and download the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the full path in the command. v25.0 is the RVDB version. 
 
 ### Set up configuration
-Customize the workflow based on your need in `config.yaml`, such as your sequence file extension and database paths. Please see the details in [wiki](https://github.com/healthyPlant/PhytoPipe/wiki).
+Customize the workflow based on your needs in `config.yaml`, such as your sequence file extension and database paths. Please see the details in [wiki](https://github.com/healthyPlant/PhytoPipe/wiki).
 
 ### Run PhytoPipe
-Please check [dependencies and databases requirements](https://github.com/healthyPlant/PhytoPipe/wiki) first, if they are met, then you can run PhytoPipe
+Please check [dependencies and databases requirements](https://github.com/healthyPlant/PhytoPipe/wiki) first using a dry-run (-n flag). If they are met, then you can run PhytoPipe
 
 For fastq.gz reads input dry-run:
 ```shell
@@ -77,25 +76,25 @@ For raw Illumina flowcell's data input dry-run:
 $ snakemake  --configfile /path/to/PhytoPipe/config.yaml -s /path/to/PhytoPipe/Snakefile --config workDir=/path/to/output/folder flowCellDir=/path/to/Illumina/run --cores [number of cores ex. 16] -n
 ```
 
-If dry-run (-n) succeeds, please remove '-n' parameter to run the pipeline. If you'd like to run it in the background, please use 'nohup'. For example:
+If the dry-run succeeds, please remove '-n' parameter to run the pipeline. If you'd like to run it in the background, please use 'nohup'. For example:
 ```shell
 $ nohup snakemake  --configfile /path/to/PhytoPipe/config.yaml -s /path/to/PhytoPipe/Snakefile --config workDir=/path/to/output/folder fastqDir=/path/to/input/fastq/folder --cores [number of cores ex. 16] &
 ```
 **Important:** For workDir and fastqDir paths, full paths must be used.
 
-You can view progress or errors in the file 'nohup.out' by the command
+You can view progress or errors in the file 'nohup.out' using the command
 
 `more nohup.out`
 
 ### PhytoPipe quick test
-After software and databases are ready, you can run a quick test using the data in the test/data folder. The steps can be found in [test notebook](test/quick_test.ipynb).  
+After the software and databases are ready, you can run a quick test using the data in the test/data folder. The steps can be found in [test notebook](test/quick_test.ipynb).  
 
 # PhytoPipe docker image
 [The PhytoPipe docker image](https://hub.docker.com/r/xhu556/phytopipe) can be pulled 
 ```
 docker pull xhu556/phytopipe
 ```
-Docker can avoid the software installation. You can use the docker image on many systems (Linux, Mac, Windows). PhytoPipe docker image usage is in its [docker README](https://hub.docker.com/r/xhu556/phytopipe). PhytoPipe docker tutorial can be found in [test docker](test/PhytoPipe_docker_tutorial.ipynb).
+Docker can help you avoid manually installing the software. You can use the docker image on many systems (Linux, Mac, Windows). PhytoPipe docker image usage is in its [docker README](https://hub.docker.com/r/xhu556/phytopipe). PhytoPipe docker tutorial can be found in [test docker](test/PhytoPipe_docker_tutorial.ipynb).
 
 # Documentation
 
