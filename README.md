@@ -92,7 +92,7 @@ After the software and databases are ready, you can run a quick test using the d
 # PhytoPipe docker image
 [The PhytoPipe docker image](https://hub.docker.com/r/healthyplant/phytopipe) can be pulled 
 ```
-docker pull xhu556/phytopipe
+docker pull healthyplant/phytopipe
 ```
 Docker can help you avoid manually installing the software. You can use the docker image on many systems (Linux, Mac, Windows). PhytoPipe docker image usage is in its [docker README](https://hub.docker.com/r/healthyplant/phytopipe). PhytoPipe docker tutorial can be found in [test docker](test/PhytoPipe_docker_tutorial.ipynb).
 
