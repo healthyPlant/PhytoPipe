@@ -37,7 +37,7 @@ PhytoPipe is an open-source bioinformatics pipeline for plant pathogen detection
 ## Quick start
 ### Installation
 
-For a Windows system, please use [PhytoPipe docker image](https://hub.docker.com/r/xhu556/phytopipe) to download our code and install dependencies.
+For a Windows system, please use [PhytoPipe docker image](https://hub.docker.com/r/healthyplant/phytopipe).
 
 For a Linux or Mac system, you can download our code or clone the repository using Git:
 ```
@@ -90,11 +90,11 @@ You can view progress or errors in the file 'nohup.out' using the command
 After the software and databases are ready, you can run a quick test using the data in the test/data folder. The steps can be found in [test notebook](test/quick_test.ipynb).  
 
 # PhytoPipe docker image
-[The PhytoPipe docker image](https://hub.docker.com/r/xhu556/phytopipe) can be pulled 
+[The PhytoPipe docker image](https://hub.docker.com/r/healthyplant/phytopipe) can be pulled 
 ```
 docker pull xhu556/phytopipe
 ```
-Docker can help you avoid manually installing the software. You can use the docker image on many systems (Linux, Mac, Windows). PhytoPipe docker image usage is in its [docker README](https://hub.docker.com/r/xhu556/phytopipe). PhytoPipe docker tutorial can be found in [test docker](test/PhytoPipe_docker_tutorial.ipynb).
+Docker can help you avoid manually installing the software. You can use the docker image on many systems (Linux, Mac, Windows). PhytoPipe docker image usage is in its [docker README](https://hub.docker.com/r/healthyplant/phytopipe). PhytoPipe docker tutorial can be found in [test docker](test/PhytoPipe_docker_tutorial.ipynb).
 
 # Documentation
 
