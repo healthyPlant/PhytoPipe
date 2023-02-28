@@ -58,7 +58,7 @@ To install/update all databases, simply run
 ```
 nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/software/PhytoPipe /path/to/RVDB/database v25.0 &
 ```
-Please find and download the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the full path in the command. v25.0 is the RVDB version. 
+Please find the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the full path in the command. v25.0 in the above command is the RVDB version.  
 
 ### Set up configuration
 Customize the workflow based on your needs in `config.yaml`, such as your sequence file extension and database paths. Please see the details in [wiki](https://github.com/healthyPlant/PhytoPipe/wiki).
