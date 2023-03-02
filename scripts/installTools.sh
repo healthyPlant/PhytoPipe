@@ -4,6 +4,10 @@
 SRC=$1 #/opt
 
 BIN=/usr/local/bin
+
+#************************************
+#This is for Ubuntu libary installing,
+#For other systems, please find the related libaries.
 sudo apt-get update  
 sudo apt-get -qq -y install git curl wget unzip make apt-utils default-jdk build-essential libssl-dev zlib1g-dev libbz2-dev liblzma-dev libz-dev libfreetype6-dev libpng-dev autogen libtool shtool 
 
@@ -17,8 +21,8 @@ sudo apt-get -qq -y install python3-dev python3-pip python3-versioneer
 #sudo apt-get update && sudo apt-get -qq -y install python3
 #sudo ln -sf /bin/python3 /bin/python
 
-#install Parallel
-sudo apt-get -qq -y install parallel
+#********************************************************
+#The following codes should be for Linux or Mac.
 
 #install biopython
 sudo pip install biopython
@@ -213,6 +217,15 @@ mkdir diamond2.1.1
 mv diamond diamond2.1.1/
 sudo ln -s $SRC/diamond2.1.1/diamond $BIN/diamond
 
+#install Parallel
+#sudo apt-get -qq -y install parallel
+wget --no-check-certificate https://ftp.gnu.org/gnu/parallel/parallel-20230222.tar.bz2
+tar -xvjf parallel-latest.tar.bz2
+cd parallel-20230222
+./configure --prefix=/ppq/data1/software/parallel
+make
+make install
+sudo ln -s $SRC/parallel/bin/parallel $BIN/parallel
 
 #install pandas
 sudo pip install pandas
@@ -234,6 +247,7 @@ rm -rf $SRC/kraken2
 rm -rf $SRC/seqtk
 rm -rf $SRC/KronaTools-2.8.1.tar
 rm -rf $SRC/kaiju
+rm -rf $SRC/parallel-20230222
 cd ..
 
 sudo apt-get -qq -y autoremove
