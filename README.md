@@ -37,7 +37,7 @@ PhytoPipe is an open-source bioinformatics pipeline for plant pathogen detection
 ## Quick start
 ### Installation
 
-For a Windows system, please use [PhytoPipe docker image](https://hub.docker.com/r/xhu556/phytopipe) to download our code and install dependencies.
+For a Windows system, please use [PhytoPipe docker image](https://hub.docker.com/r/healthyplant/phytopipe).
 
 For a Linux or Mac system, you can download our code or clone the repository using Git:
 ```
@@ -58,7 +58,7 @@ To install/update all databases, simply run
 ```
 nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/software/PhytoPipe /path/to/RVDB/database v25.0 &
 ```
-Please find and download the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the full path in the command. v25.0 is the RVDB version. 
+Please find the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the full path in the command. v25.0 in the above command is the RVDB version.  
 
 ### Set up configuration
 Customize the workflow based on your needs in `config.yaml`, such as your sequence file extension and database paths. Please see the details in [wiki](https://github.com/healthyPlant/PhytoPipe/wiki).
@@ -90,11 +90,11 @@ You can view progress or errors in the file 'nohup.out' using the command
 After the software and databases are ready, you can run a quick test using the data in the test/data folder. The steps can be found in [test notebook](test/quick_test.ipynb).  
 
 # PhytoPipe docker image
-[The PhytoPipe docker image](https://hub.docker.com/r/xhu556/phytopipe) can be pulled 
+[The PhytoPipe docker image](https://hub.docker.com/r/healthyplant/phytopipe) can be pulled 
 ```
-docker pull xhu556/phytopipe
+docker pull healthyplant/phytopipe
 ```
-Docker can help you avoid manually installing the software. You can use the docker image on many systems (Linux, Mac, Windows). PhytoPipe docker image usage is in its [docker README](https://hub.docker.com/r/xhu556/phytopipe). PhytoPipe docker tutorial can be found in [test docker](test/PhytoPipe_docker_tutorial.ipynb).
+Docker can help you avoid manually installing the software. You can use the docker image on many systems (Linux, Mac, Windows). PhytoPipe docker image usage is in its [docker README](https://hub.docker.com/r/healthyplant/phytopipe). PhytoPipe docker tutorial can be found in [test docker](test/PhytoPipe_docker_tutorial.ipynb).
 
 # Documentation
 
