@@ -56,7 +56,7 @@ For other Linux or Mac systems, please follow [PhytoPipe wiki](https://github.co
 ### Build databases
 To install/update all databases, simply run
 ```
-nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/software/PhytoPipe /path/to/RVDB/database v25.0 &
+nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/software/PhytoPipe /path/to/database v25.0 &
 ```
 Please find the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the full path in the command. v25.0 in the above command is the RVDB version.  
 
