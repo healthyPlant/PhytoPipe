@@ -45,7 +45,7 @@ cd /path/to/software
 git clone https://github.com/healthyPlant/PhytoPipe.git
 ```
 
-Then, to install dependencies in an Ubuntu system, simply run
+Then install dependencies. For an Ubuntu system, simply run
 ```
 sudo bash /path/to/PhytoPipe/scripts/installTools.sh /path/to/software
 ```
@@ -56,7 +56,7 @@ For other Linux or Mac systems, please follow [PhytoPipe wiki](https://github.co
 ### Build databases
 To install/update all databases, simply run
 ```
-nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/software/PhytoPipe /path/to/RVDB/database v25.0 &
+nohup bash /path/to/PhytoPipe/scripts/updateDatabase.sh /path/to/software/PhytoPipe /path/to/database v25.0 &
 ```
 Please find the newest RVDB version from [RVDB database, protein version](https://rvdb-prot.pasteur.fr/) and use the full path in the command. v25.0 in the above command is the RVDB version.  
 
@@ -87,7 +87,7 @@ You can view progress or errors in the file 'nohup.out' using the command
 `more nohup.out`
 
 ### PhytoPipe quick test
-After the software and databases are ready, you can run a quick test using the data in the test/data folder. The steps can be found in [test notebook](test/quick_test.ipynb).  
+After the software and databases are ready, you can run a quick test using [the VIROMOCKchallenge Dataset8](https://gitlab.com/ilvo/VIROMOCKchallenge/-/blob/master/Datasets/Dataset8.md), which is in the test/data folder. The steps can be found in [test notebook](test/quick_test.ipynb).  
 
 # PhytoPipe docker image
 [The PhytoPipe docker image](https://hub.docker.com/r/healthyplant/phytopipe) can be pulled 
