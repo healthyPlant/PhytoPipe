@@ -45,7 +45,7 @@ cd /path/to/software
 git clone https://github.com/healthyPlant/PhytoPipe.git
 ```
 
-Then, to install dependencies in an Ubuntu system, simply run
+Then install dependencies. For an Ubuntu system, simply run
 ```
 sudo bash /path/to/PhytoPipe/scripts/installTools.sh /path/to/software
 ```
