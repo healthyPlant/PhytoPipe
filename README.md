@@ -87,7 +87,7 @@ You can view progress or errors in the file 'nohup.out' using the command
 `more nohup.out`
 
 ### PhytoPipe quick test
-After the software and databases are ready, you can run a quick test using the data in the test/data folder. The steps can be found in [test notebook](test/quick_test.ipynb).  
+After the software and databases are ready, you can run a quick test using [the VIROMOCKchallenge Dataset8](https://gitlab.com/ilvo/VIROMOCKchallenge/-/blob/master/Datasets/Dataset8.md), which is in the test/data folder. The steps can be found in [test notebook](test/quick_test.ipynb).  
 
 # PhytoPipe docker image
 [The PhytoPipe docker image](https://hub.docker.com/r/healthyplant/phytopipe) can be pulled 
