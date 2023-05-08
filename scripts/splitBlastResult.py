@@ -27,10 +27,6 @@ def getBlast(blastFile):
             cells = line.rstrip().split('\t')
             if(cells[0] not in blastDict or float(blastDict[cells[0]][11]) < float(cells[11])): #only keep top one (the highest bitscore) for a query
                 blastDict[cells[0]] = cells
-                #calculate coverage
-                #s_start, s_end, s_len = map(float, (cells[8], cells[9], cells[5]))
-                #q_cov = 100.0 * abs(s_end - s_start) / s_len
-                #q_cov = format(q_cov, '.2f')
                 q_cov = cells[-1] #using qcovs: Query Coverage Per Subject (for all HSPs)
 
                 #Coverage,Evalue,Identity,Description
@@ -46,8 +42,13 @@ def AddSeq(seqFile, covDict, failedFile):
     Add sequence to blast result
     """
     #put fasta sequences in dict
-    record_dict = SeqIO.index(seqFile, "fasta")
-    outHandle = None
+    record_dict = {}
+    for record in SeqIO.parse(seqFile, "fasta"):
+        if record.id in record_dict:
+            print(seqFile, " has a duplicate ", record.id)
+        else:
+            record_dict[record.id] = record #record.seq
+    
     if failedFile:
         outHandle = open(failedFile, "w")
 
@@ -66,7 +67,6 @@ def AddSeq(seqFile, covDict, failedFile):
     if failedFile:
         outHandle.close()
 
-    record_dict.close()
 
 #################################### Add sequences to blast result ####################################
 def output2File(covDict, output, blastType):
