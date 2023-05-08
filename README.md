@@ -51,7 +51,7 @@ sudo bash /path/to/PhytoPipe/scripts/installTools.sh /path/to/software
 ```
 For other Linux or Mac systems, please follow [PhytoPipe wiki](https://github.com/healthyPlant/PhytoPipe/wiki#dependencies) to install dependencies.
 
-***Since some tools conflict in a conda environment and are hard to update, we do not recommend installing all dependencies using conda.***
+***Since some tools conflict in a conda environment and are hard to update, we do not recommend installing all dependencies using conda.*** For a conda user, please check [PhytoPipe wiki](https://github.com/healthyPlant/PhytoPipe/wiki#dependencies) to see how to create a PhytoPipe conda environment.
 
 ### Build databases
 To install/update all databases, simply run
