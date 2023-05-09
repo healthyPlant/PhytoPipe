@@ -41,7 +41,7 @@ chmod 755 $SRC/FastQC/fastqc
 sudo ln -s $SRC/FastQC/fastqc $BIN/fastqc
 
 #install Trimmomatic
-wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.39.zip 
+wget https://github.com/usadellab/Trimmomatic/files/5854859/Trimmomatic-0.39.zip 
 unzip Trimmomatic-0.39.zip
 
 #install quast
@@ -145,9 +145,9 @@ cd ..
 
 #Installing NCBI-BLAST+
 #sudo apt-get -qq -y install ncbi-blast+  #version > 2.10. v2.9 doesn't work
-wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.13.0+-x64-linux.tar.gz
-tar -xvzf ncbi-blast-2.13.0+-x64-linux.tar.gz
-sudo ln -s $SRC/ncbi-blast-2.13.0+/bin/* $BIN/.
+wget  https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.14.0/ncbi-blast-2.14.0+-x64-linux.tar.gz
+tar -xvzf ncbi-blast-2.14.0+-x64-linux.tar.gz
+sudo ln -s $SRC/ncbi-blast-2.14.0+/bin/* $BIN/.
 
 #install BBtools
 #RUN apt-get -qq -y install bbmap  #Ubuntu BBmap doesn't work
