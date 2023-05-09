@@ -58,7 +58,7 @@ RUN wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.
 
 #install Trimmomatic
 WORKDIR $SRC
-RUN wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.39.zip && \
+RUN wget https://github.com/usadellab/Trimmomatic/files/5854859/Trimmomatic-0.39.zip && \
     unzip Trimmomatic-0.39.zip && \
     rm -rf Trimmomatic-0.39.zip
 
@@ -174,9 +174,9 @@ RUN ln -s $SRC/bbmap/*.sh $BIN/.
 #install NCBI-BLAST 2.13
 WORKDIR $SRC
 RUN apt-get -qq -y remove ncbi-blast+
-RUN wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.13.0+-x64-linux.tar.gz && \
-    tar -xvzf ncbi-blast-2.13.0+-x64-linux.tar.gz
-RUN ln -s $SRC/ncbi-blast-2.13.0+/bin/* $BIN/.
+RUN wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.14.0/ncbi-blast-2.14.0+-x64-linux.tar.gz && \
+    tar -xvzf ncbi-blast-2.14.0+-x64-linux.tar.gz
+RUN ln -s $SRC/ncbi-blast-2.14.0+/bin/* $BIN/.
 
 WORKDIR $SRC
 #install Bowtie2
