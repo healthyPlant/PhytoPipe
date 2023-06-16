@@ -157,6 +157,7 @@ def selectTop(blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cutoff_blast
             outDict[id] = "\t".join(blastnDict[id]) + "\tBlastn"
             taxonDict[blastnDict[id][13]] = 1
             #print("Blastn ", id, " ", blastnDict[id][13])
+            #del blastnDict[id]  #delete the key, value
         #2)select a viroid if its evalue<=1e-10 and have viroid in the annotation
         if("viroid" in blastnDict[id][12] and float(blastnDict[id][10]) <= virod_cutoff):  
             outDict[id] = "\t".join(blastnDict[id]) + "\tBlastn"
@@ -204,16 +205,30 @@ def selectTop(blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cutoff_blast
             #print("Virus segments ", newid)
         
     #5. if virus is found in both kaiju and blastx
+    contigLenDict = {}
     for id in blastxDict:
-        #if matched protein is found, keep it
+       #if matched protein is found, keep it
        for tid in kaijuDict:
-            if id not in outDict and blastxDict[id][13] not in taxonDict and float(kaijuDict[tid]) >= kaiju_cutoff: #if Kaiju reads# >=100:
-                #if taxon_id in both kaiju and blastx and blastx evalue < cutoff, keep it
-                if tid == blastxDict[id][13] and float(blastxDict[id][10]) <= evalue_cutoff_blastx: #if the same taxon id
-                    #print("Kaiju + Blastx ", id, " ", blastxDict[id][13])
-                    taxonDict[blastxDict[id][13]] = 1    
-                    outDict[id] = "\t".join(blastxDict[id]) + "\tBlastx"  #+ "\t"*5, blastxDict[id][16]
-    
+            #if taxon_id in both kaiju and blastx and blastx evalue < cutoff, keep it
+            if tid == blastxDict[id][13] and float(blastxDict[id][10]) <= evalue_cutoff_blastx: #if the same taxon id
+                if id not in outDict and blastxDict[id][13] not in taxonDict and float(kaijuDict[tid]) >= kaiju_cutoff: #if Kaiju reads# >=100:
+                    #print("Kaiju + Blastx ", id, ", taxon:", blastxDict[id][13], ", contig length:", blastxDict[id][4])
+                    #for a taxon has many contigs, select the longest contig
+                    tax = blastxDict[id][13]
+                    contig_len = int(blastxDict[id][4])
+                    if tax in contigLenDict:
+                        if contig_len > contigLenDict[tax][1]: #compare contigs length
+                            contigLenDict[tax] = [id, contig_len]
+                    else:
+                        contigLenDict[tax] = [id, contig_len]
+
+    #print(contigLenDict)
+    if len(contigLenDict) > 0:
+        for tax in contigLenDict:
+            id = contigLenDict[tax][0]
+            taxonDict[tax] = 1
+            outDict[id] = "\t".join(blastxDict[id]) + "\tBlastx"  #+ "\t"*5, blastxDict[id][16]
+
     #Note: can't use contig coverage filter, some virus titer is very low
     #del outDict[id]
 
@@ -239,6 +254,7 @@ def getRefName(selectDict):
             #combined id: refid + taxid, for some viruses having several segments
             cid = rid + "_" + cells[13]
             if (cid not in idDictn or float(cells[11]) > bitscoreDictn[cid]):#keep the taxon having the higher bitscore
+                #idDictn[cid] = id
                 idDictn[cid] = rid
                 #print(id)
                 bitscoreDictn[cid] = float(cells[11]) #refid+taxonid, bitscore          
