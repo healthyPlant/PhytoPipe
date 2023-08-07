@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 ######################################################################
 #Alex Hu <xiaojun.hu@usda.gov>
-#Updated: 07/15/2021
+#Updated: 06/15/2023
 #This program selects top references from kraken2, kaiju, blastn and blastx resultx
 #
 #Required Parameters:
