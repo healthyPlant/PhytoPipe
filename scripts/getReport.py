@@ -15,7 +15,7 @@
 #   -o, --output X.........................Report file name 
 #Optional Parameters:
 #   -f, --forward..........................Forward strand surffix in the fastq file, ex. R1
-#   -f, --reverse..........................Reverse strand surffix in the fastq file, ex. R1
+#   -f, --reverse..........................Reverse strand surffix in the fastq file, ex. R2
 #######################################################################
 
 import os, sys
@@ -43,17 +43,21 @@ def getReadStat(inFile, strand1, strand2):
             line = line.strip()
             cells = line.split("\t")
             smpName = cells[0]  #sample"_S1_R1_001"
-            if strand1 and strand1 in cells[0]:  
-                smpName = re.sub(r"(.*)_%s.*" % strand1, "\\1", cells[0])  #cells[0].replace("_"+strand1, "")
+
+            if strand1 and (cells[0].endswith('_R1') or cells[0].endswith('_R2')):  #for trimmed sample names
+                smpName = re.sub('_R[1|2]$','', smpName)
                 statDict0[smpName] = {}
-            elif strand2 in cells[0]:
-                smpName = re.sub(r"(.*)_%s.*" % strand2, "\\1", cells[0])  #cells[0].replace("_"+strand2, "")
+            elif strand1 and (cells[0].endswith(strand1) or cells[0].endswith(strand1 + '_001')):  #strand1 != ''
+                smpName = re.sub(r"(.*)_%s(_001)?$" % strand1, "\\1", cells[0])  #cells[0].replace("_"+strand1, "")
+                statDict0[smpName] = {}
+            elif (cells[0].endswith(strand2) or cells[0].endswith(strand2 + '_001')):
+                smpName = re.sub(r"(.*)_%s(_001)?$" % strand2, "\\1", cells[0])  #cells[0].replace("_"+strand2, "")
                 if smpName not in statDict0:
                     statDict0[smpName] = {}
             else:
                 smpName = cells[0]
                 statDict0[smpName] = {}
-            #print(smpName)
+
             statDict0[smpName].setdefault("readLen",[]).append(cells[3])
             statDict0[smpName].setdefault("totalRead",[]).append(cells[5])
     #print(statDict0)
@@ -314,9 +318,9 @@ def main():
         #print("trim id: ", id1)
         for id2 in list(readStat): #'_S1_R1_001' is added by bcl2fastq
             #print("raw id: ", id2)
-            if id1 in id2:
+            if id1+"_" in id2:
                 readStat[id1] = readStat.pop(id2) #change dict key
-
+    #print(readStat)
     #get reference taxonomomy
     taxonDict = getTax(annDir) #ref: [taxonid, species, taxonomy]
     #print(taxonDict)
