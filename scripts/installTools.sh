@@ -108,11 +108,9 @@ cd ..
 
 #install Trinity
 sudo apt-get -qq -y install rsync jellyfish salmon
-wget https://github.com/trinityrnaseq/trinityrnaseq/releases/download/Trinity-v2.15.0/trinityrnaseq-v2.15.0.FULL.tar.gz
-tar -xvzf trinityrnaseq-v2.15.0.FULL.tar.gz
-cd trinityrnaseq-v2.15.0 
-sed -i '2 a #include <string>' trinity-plugins/bamsifter/sift_bam_max_cov.cpp
-sed -i 's/HTSCODECS_VERSION_TEXT/HTSCODECS_VERSION/' trinity-plugins/bamsifter/htslib/htscodecs/htscodecs/htscodecs.c
+wget https://github.com/trinityrnaseq/trinityrnaseq/releases/download/Trinity-v2.15.1/trinityrnaseq-v2.15.1.FULL.tar.gz
+tar -xvzf trinityrnaseq-v2.15.1.FULL.tar.gz
+cd trinityrnaseq-v2.15.1 
 make && make plugins
 sudo make install
 cd ..
