@@ -89,7 +89,7 @@ echo "kraken2-build --download-taxonomy --threads 16 --db $krakendb"
 echo "kraken2-build --download-library nt --db $krakendb"
 kraken2-build --download-library nt --db $krakendb
 echo "kraken2-build --build --threads 16 --db $krakendb &"
-kraken2-build --build --threads 16 --db $krakendb &
+kraken2-build --build --threads 16 --db $krakendb --max-db-size 128000000000 &
 echo "kraken2-build is running in the background and may take several days."
 PID_kraken2=$!
 
