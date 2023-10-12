@@ -11,7 +11,7 @@
 import sys
 
 if len(sys.argv) != 3:
-    print("Usage: python summarizeBlast.py [sample name] [input file] [output file] ")
+    print("Usage: python summarizeBlast.py [input file] [output file] ")
     print("Argument missed, exit!")
     sys.exit()
 
@@ -52,7 +52,7 @@ for species in speciesDict:
         microbialGroup = "Bacteria"
     elif microbialGroup.startswith("Viruses;"):
         microbialGroup = "Viruses"
-    elif microbialGroup.startswith("cellular organisms; Eukaryota; Sar; Stramenopiles; Oomycota"):
+    elif microbialGroup.startswith("cellular organisms;Eukaryota;Sar;Stramenopiles;Oomycota;"):
         microbialGroup = "Oomycetes"
     elif microbialGroup.startswith("cellular organisms;Archaea;"):
         microbialGroup = "Archaea"
