@@ -9,7 +9,7 @@ BIN=/usr/local/bin
 #This is for Ubuntu libary installing,
 #For other systems, please find the related libaries.
 sudo apt-get update  
-sudo apt-get -qq -y install git curl wget unzip make apt-utils default-jdk build-essential libssl-dev zlib1g-dev libbz2-dev liblzma-dev libz-dev libfreetype6-dev libpng-dev autogen libtool shtool cpanm
+sudo apt-get -qq -y install git curl wget unzip make apt-utils default-jdk build-essential libssl-dev zlib1g-dev libbz2-dev liblzma-dev libz-dev libfreetype6-dev libpng-dev autogen libtool shtool cpanminus
 
 #sudo apt-get -qq -y install pkg-config 
 #Configuring tzdata
@@ -25,10 +25,10 @@ sudo apt-get -qq -y install python3-dev python3-pip python3-versioneer
 #The following codes should be for Linux or Mac.
 
 #install biopython
-sudo pip install biopython
+sudo pip install biopython==1.81
 
 #install multiqc
-sudo pip install multiqc
+sudo pip install multiqc==1.12
 
 #install Cython
 sudo pip install Cython
