@@ -9,7 +9,7 @@ BIN=/usr/local/bin
 #This is for Ubuntu libary installing,
 #For other systems, please find the related libaries.
 sudo apt-get update  
-sudo apt-get -qq -y install git curl wget unzip make apt-utils default-jdk build-essential libssl-dev zlib1g-dev libbz2-dev liblzma-dev libz-dev libfreetype6-dev libpng-dev autogen libtool shtool 
+sudo apt-get -qq -y install git curl wget unzip make apt-utils default-jdk build-essential libssl-dev zlib1g-dev libbz2-dev liblzma-dev libz-dev libfreetype6-dev libpng-dev autogen libtool shtool cpanm
 
 #sudo apt-get -qq -y install pkg-config 
 #Configuring tzdata
@@ -107,6 +107,10 @@ sudo make install
 cd ..
 
 #install Trinity
+#install perl module DB_file
+sudo apt-get install libdb-dev
+sudo cpanm install DB_File
+
 sudo apt-get -qq -y install rsync jellyfish salmon
 wget https://github.com/trinityrnaseq/trinityrnaseq/releases/download/Trinity-v2.15.1/trinityrnaseq-v2.15.1.FULL.tar.gz
 tar -xvzf trinityrnaseq-v2.15.1.FULL.tar.gz
