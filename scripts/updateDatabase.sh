@@ -85,11 +85,11 @@ echo "#*****************************"
 echo "#1. build Kraken2 db"
 cd $krakendb
 echo "kraken2-build --download-taxonomy --threads 16 --db $krakendb"
-#kraken2-build --download-taxonomy --threads 16 --db $krakendb
+kraken2-build --download-taxonomy --threads 16 --db $krakendb
 echo "kraken2-build --download-library nt --db $krakendb"
 kraken2-build --download-library nt --db $krakendb
 echo "kraken2-build --build --threads 16 --db $krakendb &"
-kraken2-build --build --threads 16 --db $krakendb --max-db-size 128000000000 &
+kraken2-build --build --threads 16 --db $krakendb --max-db-size 256000000000 &
 echo "kraken2-build is running in the background and may take several days."
 PID_kraken2=$!
 
@@ -110,7 +110,7 @@ update_blastdb.pl --decompress --force nt
 #*****************************************
 echo "#4. update NCBI nr diamond format"
 cd $ncbi
-wget -q --show-progress ftp://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/nr.gz
+wget --no-verbose ftp://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/nr.gz
 echo "diamond makedb --in nr.gz -d nr"
 diamond makedb --in nr.gz -d nr
 
@@ -129,7 +129,7 @@ echo "cp $kaijudb/nr_euk/prot.accession2taxid $taxondb/"
 if [ -f $kaijudb/nr_euk/prot.accession2taxid ]; then
     cp $kaijudb/nr_euk/prot.accession2taxid $taxondb/
 else
-    wget -q --show-progress https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+    wget --no-verbose https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
     gunzip prot.accession2taxid.gz
 fi
 
@@ -138,7 +138,7 @@ if [[ -f $krakendb/taxonomy/nodes.dmp && -f $krakendb/taxonomy/names.dmp ]]; the
     cp $krakendb/taxonomy/nodes.dmp $taxondb/
     cp $krakendb/taxonomy/names.dmp $taxondb/
 else
-    wget -q --show-progress https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
+    wget --no-verbose https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
     tar -xvzf taxdump.tar.gz
 fi
 
@@ -146,7 +146,7 @@ echo "cp $krakendb/taxonomy/nucl_gb.accession2taxid $taxondb/"
 if [ -f $krakendb/taxonomy/nucl_gb.accession2taxid ]; then
     cp $krakendb/taxonomy/nucl_gb.accession2taxid $taxondb/
 else
-    wget -q --show-progress https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz
+    wget --no-verbose https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz
     gunzip nucl_gb.accession2taxid.gz
 fi
 
@@ -210,7 +210,7 @@ rm -f kaiju.out
 #*****************************************
 echo "#9. Download Reference Viral Database (RVDB-prot) and build diamond format db"
 cd $ncbi
-wget -q --show-progress https://rvdb-prot.pasteur.fr/files/U-RVDB"$rvdb_version"-prot.fasta.xz  #v25.0
+wget --no-verbose https://rvdb-prot.pasteur.fr/files/U-RVDB"$rvdb_version"-prot.fasta.xz  #v25.0
 xz --decompress U-RVDB"$rvdb_version"-prot.fasta.xz
 if [ -s RVDB.fasta ]; then
     rm -rf RVDB.fasta
