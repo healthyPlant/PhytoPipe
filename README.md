@@ -104,8 +104,7 @@ More information on input/output, dependencies, and databases are found in the [
 
 # Citation
 
-> The manuscript is under review.
-> Will update later. 
+Hu, X., Hurtado-Gonzales, O.P., Adhikari, B.N. et al. PhytoPipe: a phytosanitary pipeline for plant pathogen detection and diagnosis using RNA-seq data. BMC Bioinformatics 24, 470 (2023). https://doi.org/10.1186/s12859-023-05589-2
 
 Contact
 ------------
