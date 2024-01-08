@@ -33,7 +33,7 @@ fi
 
 echo "#*****************************"
 echo "Check programs"
-programs=("kraken2-build" "kaiju-makedb" "update_blastdb.pl" "diamond" "updateTaxonomy.sh" "updateAccessions.sh" "parallel" "blastdbcmd" "makeblastdb" "kaiju-addTaxonNames" "get_species_taxids.sh" "esearch" "filterbyname.sh")
+programs=("kraken2-build" "kaiju-makedb" "update_blastdb.pl" "diamond" "updateTaxonomy.sh" "updateAccessions.sh" "parallel" "blastdbcmd" "makeblastdb" "kaiju-addTaxonNames" "get_species_taxids.sh" "esearch" "filterbyname.sh" "xz")
 for prog in ${programs[@]}
 do
     if ! command -v $prog &> /dev/null
@@ -81,45 +81,51 @@ if [ ! -d $rrnadb ]; then
 fi
 #*****************************************
 #Build or update databases
+
+
+#<<COMMENT
+#**********************************************
 echo "#*****************************"
-echo "#1. build Kraken2 db"
+echo "#1. Kraken2 step1: download taxonomy and sequences"
 cd $krakendb
 echo "kraken2-build --download-taxonomy --threads 16 --db $krakendb"
 kraken2-build --download-taxonomy --threads 16 --db $krakendb
 echo "kraken2-build --download-library nt --db $krakendb"
-kraken2-build --download-library nt --db $krakendb
-echo "kraken2-build --build --threads 16 --db $krakendb &"
-kraken2-build --build --threads 16 --db $krakendb --max-db-size 256000000000 &
-echo "kraken2-build is running in the background and may take several days."
-PID_kraken2=$!
+kraken2-build --use-ftp --download-library nt --db $krakendb
+echo "NCBI taxonomy and nt for Kraken2 are downloaded."
 
-#**********************************************
 echo "#2. build Kaiju db"
 cd $kaijudb
-echo "kaiju-makedb -t 16 -s nr_euk &"
-echo "kaiju-makedb is running in the background and may take several days."
+echo "kaiju-makedb -t 16 -s nr_euk"
+#echo "kaiju-makedb is running in the background and may take several days."
 kaiju-makedb -t 16 -s nr_euk &
 PID_kaiju=$!
+wait $PID_kaiju
+echo "Kaiju database building has finished."
 
 #**********************************************
 echo "#3. update NCBI_nt"
 cd $ncbi_nt
-echo "update_blastdb.pl --decompress --force nt"
-update_blastdb.pl --decompress --force nt
+echo "update_blastdb.pl --quiet --passive --decompress --force nt"
+update_blastdb.pl --quiet --passive --decompress --force nt
+echo "NCBI blastn database nt is downloaded."
 
 #*****************************************
 echo "#4. update NCBI nr diamond format"
 cd $ncbi
+echo "wget --no-verbose ftp://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/nr.gz"
 wget --no-verbose ftp://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/nr.gz
-echo "diamond makedb --in nr.gz -d nr"
-diamond makedb --in nr.gz -d nr
+echo "diamond makedb --quiet --threads 16 --in nr.gz -d nr"
+diamond makedb --quiet --threads 16 --in nr.gz -d nr
+echo "Diamond NCBI nr database is built."
 
 #*****************************************
 echo "#5. update Krona taxonomy db"
 echo "updateTaxonomy.sh && updateAccessions.sh"
 updateTaxonomy.sh
 updateAccessions.sh
-#the database files all.accession2taxid.sorted and taxonomy.tab are in the folder [Krona software folder]/taxonomy
+echo "Krona taxonomy db is built."
+echo "The database files all.accession2taxid.sorted and taxonomy.tab are in the folder [Krona software folder]/taxonomy."
 
 #*****************************************
 echo "#6. download NCBI taxonomy db"
@@ -153,7 +159,9 @@ fi
 #*****************************************
 echo "#7. build viral reference blastn db"
 cd $ncbi
-wget -q --show-progress -r -nd -np -A '*.genomic.fna.gz' ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral
+echo "Download NCBI viral references."
+echo "wget --no-verbose -r -nd -np -A '*.genomic.fna.gz' ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral"
+wget --no-verbose -r -nd -np -A '*.genomic.fna.gz' ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral
 zcat viral.*.genomic.fna.gz > refseq_viral_genomic.fa
 echo "makeblastdb -in refseq_viral_genomic.fa -dbtype nucl"
 makeblastdb -in refseq_viral_genomic.fa -dbtype nucl
@@ -170,6 +178,8 @@ rm -f refseq_viral_genomic.id.txt
 rm -f refseq_viral_genomic.taxonId.txt
 rm -f refseq_viral_genomic.gb_taxon1.txt
 rm -f refseq_viral_genomic.kaiju.out
+echo "NCBI viral reference blastn database is built."
+
 #comment
 
 #*****************************************
@@ -205,11 +215,14 @@ rm -f seqid
 rm -f taxonId.txt
 rm -f gb_taxon1.txt
 rm -f kaiju.out
+echo "Plant virus blastn database is built."
+
 #comment
 
 #*****************************************
 echo "#9. Download Reference Viral Database (RVDB-prot) and build diamond format db"
 cd $ncbi
+echo "wget --no-verbose https://rvdb-prot.pasteur.fr/files/U-RVDB"$rvdb_version"-prot.fasta.xz"
 wget --no-verbose https://rvdb-prot.pasteur.fr/files/U-RVDB"$rvdb_version"-prot.fasta.xz  #v25.0
 xz --decompress U-RVDB"$rvdb_version"-prot.fasta.xz
 if [ -s RVDB.fasta ]; then
@@ -217,30 +230,54 @@ if [ -s RVDB.fasta ]; then
 fi
 ln -s U-RVDB"$rvdb_version"-prot.fasta RVDB.fasta
 echo "diamond makedb --in RVDB.fasta -d rvdb"
-diamond makedb --in RVDB.fasta -d rvdb
-
+diamond makedb --quiet --threads 16 --in RVDB.fasta -d rvdb
 
 cd $taxondb
 #get RVDB accession taxonomy using kaiju-addTaxonNames
 grep ">" $ncbi/RVDB.fasta | cut -d "|" -f 3 > RVDB-prot.id.txt
 parallel -k --pipepart -a prot.accession2taxid --block 100M fgrep -F -f RVDB-prot.id.txt | cut -f 2,3 > RVDB-prot.taxonId.txt
 awk -v FS='\t' -v OFS='\t'  '{print "C",$1,$2}'  RVDB-prot.taxonId.txt > RVDB-prot.kaiju.out 
-kaiju-addTaxonNames -t nodes.dmp -n names.dmp -i RVDB-prot.kaiju.out -o RVDB-prot.gb_taxon1.txt -p
+#kaiju-addTaxonNames -t nodes.dmp -n names.dmp -i RVDB-prot.kaiju.out -o RVDB-prot.gb_taxon1.txt -p
 cut -f 2- RVDB-prot.gb_taxon1.txt > rvdb.gb_taxon.txt
 rm -f RVDB-prot.id.txt
 rm -f RVDB-prot.taxonId.txt
 rm -f RVDB-prot.gb_taxon1.txt
 rm -f RVDB-prot.kaiju.out
+echo "RVDB blastx database is built."
 
 #**********************************************
 echo "#10. download Eukaryote ribosomal RNA database"
 cd $rrnadb
 if [ ! -s silva-euk_combined_rRNA.fasta ]; then
+	echo "wget -q --show-progress https://github.com/biocore/sortmerna/raw/master/data/rRNA_databases/silva-euk-18s-id95.fasta"
     wget -q --show-progress https://github.com/biocore/sortmerna/raw/master/data/rRNA_databases/silva-euk-18s-id95.fasta
+	echo "wget -q --show-progress https://github.com/biocore/sortmerna/raw/master/data/rRNA_databases/silva-euk-28s-id98.fasta"
     wget -q --show-progress https://github.com/biocore/sortmerna/raw/master/data/rRNA_databases/silva-euk-28s-id98.fasta
     cat silva-euk-* > silva-euk_combined_rRNA.fasta
 fi
 
+<<comment
+#For Silva database
+silva_version=138.1
+cd $rrnadb
+wget --no-verbose https://www.arb-silva.de/fileadmin/silva_databases/current/Exports/SILVA_${silva_version}_SSURef_NR99_tax_silva.fasta.gz
+wget --no-verbose https://www.arb-silva.de/fileadmin/silva_databases/current/Exports/SILVA_${silva_version}_LSURef_NR99_tax_silva.fasta.gz
+
+#get Eukaryote ribosomal RNA 
+zcat SILVA_${silva_version}_SSURef_NR99_tax_silva.fasta.gz | grep Eukaryota | sed 's/>//' > silva_SSU.names.txt
+zcat SILVA_${silva_version}_LSURef_NR99_tax_silva.fasta.gz | grep Eukaryota | sed 's/>//' > silva_LSU.names.txt
+
+#extract sequences
+seqtk subseq SILVA_${silva_version}_SSURef_NR99_tax_silva.fasta.gz silva_SSU.names.txt > silva-euk_SSU.fasta
+seqtk subseq SILVA_${silva_version}_LSURef_NR99_tax_silva.fasta.gz silva_LSU.names.txt > silva-euk_LSU.fasta
+cat silva-euk_SSU.fasta silva-euk_LSU.fasta > silva-euk_combined_rRNA.fasta
+
+#replace U with T
+sed -i '/^[^>]/s/U/T/g' silva-euk_combined_rRNA.fasta
+comment
+
+echo "Eukaryote ribosomal RNA database is downloaded."
+ 
 #**********************************************
 echo "#11. get micobial taxon ids"
 cd $ncbi
@@ -249,11 +286,22 @@ get_species_taxids.sh -t 10239 > viruses.tids
 get_species_taxids.sh -t 4751 > fungi.tids
 get_species_taxids.sh -t 4762 > oomycetes.tids
 cat fungi.tids bacteria.tids viruses.tids oomycetes.tids > microbial.tids
+if [ -s $ncbi/microbial.tids ]; then
+	echo "The file microbial.tids is generated."
+else
+	echo "Generating microbial.tids failed. Please check the command \"get_species_taxids.sh\"."
+fi
 
+echo "#*****************************"
+echo "#12. Kraken2 step2: build Kraken2 db with 256Gb size"
+cd $krakendb
+echo "kraken2-build --build --threads 16 --db $krakendb --max-db-size 256000000000"
+kraken2-build --build --threads 16 --db $krakendb --max-db-size 256000000000
+echo "kraken2-build may take several days."
+PID_kraken2=$!
 wait $PID_kraken2
 echo "Kraken2 database building has finished."
-wait $PID_kaiju
-echo "Kaiju database building has finished."
+
 
 #Clean up
 rm -rf $ncbi/*.gz
@@ -293,3 +341,5 @@ echo "microbialTaxon: $ncbi/microbial.tids"
 echo "acronymDb: $phytopipe_dir/db/ICTV_virus_acronym2019.txt"
 echo "monitorPathogen: $phytopipe_dir/db//monitorPathogen.txt"
 echo "control: $phytopipe_dir/db/phi-X174.fasta"
+
+#COMMENT
