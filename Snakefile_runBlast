@@ -1,0 +1,66 @@
+"""
+    Snakemake main file 
+"""
+__author__ = 'Xiaojun Hu <xiaojun.hu@usda.gov>'
+
+import os,subprocess,itertools,glob,re,sys
+import datetime
+from snakemake.utils import report
+
+#SETUP PROCESS-RELATED CONFIGURATION 
+try:
+	CONFIGFILE = str(workflow.overwrite_configfiles[0])
+except:
+	CONFIGFILE = str(workflow.overwrite_configfile[0])
+
+#config["workDir"] = os.getcwd()
+#setup workdir dynamically
+#rules will then be expressed relative to the workdir:
+workdir: config["workDir"]  #can be changed at the snakemake command line
+fastqDir = config["fastqDir"]  #can be changed at the snakemake command line
+
+#Get relative position of Snakefile from wd
+SNAKEFILE = workflow.snakefile
+SNAKEFILE_DIR = os.path.dirname(SNAKEFILE)
+CORES = workflow.cores #note workflow.cores work only on version 5.11.2 above
+#print(CORES)
+config["number_of_threads"] = CORES  #change threads number by command paramter --cores/-j 16
+config["snakefile"] = SNAKEFILE
+config["snakefile_dir"] = SNAKEFILE_DIR
+#print(SNAKEFILE)
+
+#print(workflow.__dict__) #print all attributes
+#Establish snakefile and environment dictionaries
+snakefiles_dir = os.path.abspath(os.path.join(SNAKEFILE_DIR, "rules"))		#directory for additional snakefiles
+#environments_dir = os.path.abspath(os.path.join(SNAKEFILE_DIR, "envs"))	#directory for conda environment yaml files
+scripts_dir = os.path.abspath(os.path.join(SNAKEFILE_DIR, "scripts")) 			#directory for extra scripts used in workflow
+
+#running folders
+logDir = config["workDir"] + "/" + config["run_info"]["log"]
+assembleDir = config["workDir"] + "/" + config["run_info"]["assemble"]
+classifyDir = config["workDir"] + "/" + config["run_info"]["classify"]
+annotateDir = config["workDir"] + "/" + config["run_info"]["annotate"]
+blastDbType = config["blastDbType"]
+
+
+#get sample names from assembleDir
+SAMPLES = [os.path.basename(x) for x in glob.glob(assembleDir+ '/*')]
+SAMPLES = list(set(SAMPLES))  #remove duplicated from a list using set
+
+print("Samples: %s"  % ", ".join(SAMPLES))
+config["samples"] = SAMPLES  #save sample names in a global viriable
+
+# load rules 
+include: os.path.join(snakefiles_dir, "annotate.smk")
+
+rule all:
+	input: #targets
+		#annotate contigs using blastn and blastx with NCBI nt and nr database
+		expand(annotateDir + "/{sample}.blastnt.txt", sample=SAMPLES),
+		expand(annotateDir + "/{sample}.blastnr.txt", sample=SAMPLES),
+
+		expand(annotateDir + "/{sample}.blastnt.summary.txt", sample=SAMPLES),
+		expand(annotateDir + "/{sample}.blastnr.summary.txt", sample=SAMPLES)
+
+	message: "Rule all"
+	shell: "echo Job done    `date '+%Y-%m-%d %H:%M'`"
