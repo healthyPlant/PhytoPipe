@@ -86,6 +86,17 @@ You can view progress or errors in the file 'nohup.out' using the command
 
 `more nohup.out`
 
+If your computer memory is limited (<256Gb), you can skip the classification steps (Kraken2 and Kaiju) to directly run trim-assemble-annotation, then check your results in the annotation folder (sample.blast.nx.txt, sample.blastnt0.txt, sample.blastnr0.txt). Here is a dry-run command example for running Trimmomatic trim, Spades assemble, and Blast against NCBI nt/nr database annotation:
+```shell
+$ snakemake  --configfile /path/to/PhytoPipe/config.yaml -s /path/to/PhytoPipe/Snakefile_runAnnotation --config workDir=/path/to/output/folder fastqDir=/path/to/input/fastq/folder mapReadType=trimmed assembler=Spades blastDbType=all --cores [number of cores ex. 16] -n 
+```
+Note: seq_type (se/pe), mapReadType, assembler, blastDbType ban be changed in config.yaml
+
+After finishing the virus detection using the virus database and RVDB, if you want to check NCBI nt and nr databases for other pathogens, you can try   
+```shell
+$ snakemake  --configfile your/config.yaml -s /path/to/PhytoPipe/Snakefile_runBlast --config workDir=/path/to/output/folder blastDbType=all --cores [number of cores ex. 16] -n 
+```
+
 ### PhytoPipe quick test
 After the software and databases are ready, you can run a quick test using [the VIROMOCKchallenge Dataset8](https://gitlab.com/ilvo/VIROMOCKchallenge/-/blob/master/Datasets/Dataset8.md), which is in the test/data folder. The steps can be found in [test notebook](test/quick_test.ipynb).  
 
