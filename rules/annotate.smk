@@ -86,7 +86,7 @@ rule run_blastnt:
 		contigs = annotateDir + "/{sample}.contigs.l200.fasta",
 		microbialTids = microbialTaxonIds
 	output:
-		blastntOut = temp(annotateDir + "/{sample}.blastnt0.txt")  #blast NCBI all nt
+		blastntOut = annotateDir + "/{sample}.blastnt0.txt"  #blast NCBI all nt
 	message:
 		'''--- annotatate {wildcards.sample} contigs using blastn against NCBI nt.'''
 	params:
@@ -139,7 +139,7 @@ rule run_blastnr:
 	input:
 		contigs = annotateDir + "/{sample}.contigs.l200.fasta",
 	output:
-		blastnrOut = temp(annotateDir + "/{sample}.blastnr0.txt"),
+		blastnrOut = annotateDir + "/{sample}.blastnr0.txt",
 	message:
 		'''--- annotatate {wildcards.sample} contigs using blastx against NCBI nr'''
 	params:
@@ -177,4 +177,23 @@ rule summarize_blastnr:
 		#classify blast
 		awk -F "\\t" 'OFS="\\t" {{ if($11 < 1e-20) print }}' {input.blastnrOut0} | sort -k 11,11g | head -10000 > {output.blastnrOut1} || true
 		ktImportBLAST -o {output.blastnrKrona} {output.blastnrOut1} &>> {log} || true 
+		"""
+
+rule merge_blastnx:
+	"""
+	Merge blastn and blastx results for viruses
+	"""
+	input:
+		blastxOut = annotateDir + "/{sample}.blastx.txt",
+		blastnOut = annotateDir + "/{sample}.blastn.txt",
+	output:
+		blastSummary = annotateDir + "/{sample}.blast.nx.txt"
+	params:
+		contigs = annotateDir + "/{sample}.contigs.l200.fasta",
+	message:
+		'''--- summarize {wildcards.sample} contigs blastn + blastx results'''
+	shell:
+		"""
+		#merge blastn and blastx results
+		python {scripts_dir}/mergeBlastnx.py -n {input.blastnOut} -x {input.blastxOut} -c {params.contigs} -o {output.blastSummary}  
 		"""

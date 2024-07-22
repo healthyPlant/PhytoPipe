@@ -1,0 +1,167 @@
+"""
+    Snakemake main file 
+"""
+__author__ = 'Xiaojun Hu <xiaojun.hu@usda.gov>'
+
+import os,subprocess,itertools,glob,re,sys
+import datetime
+from snakemake.utils import report
+
+#SETUP PROCESS-RELATED CONFIGURATION 
+try:
+	CONFIGFILE = str(workflow.overwrite_configfiles[0])
+except:
+	CONFIGFILE = str(workflow.overwrite_configfile[0])
+
+#config["workDir"] = os.getcwd()
+#setup workdir dynamically
+#rules will then be expressed relative to the workdir:
+workdir: config["workDir"]  #can be changed at the snakemake command line
+fastqDir = config["fastqDir"]  #can be changed at the snakemake command line
+flowCellDir = config["flowCellDir"]  #can be changed at the snakemake command line
+
+#Get relative position of Snakefile from wd
+SNAKEFILE = workflow.snakefile
+SNAKEFILE_DIR = os.path.dirname(SNAKEFILE)
+CORES = workflow.cores #note workflow.cores work only on version 5.11.2 above
+#print(CORES)
+config["number_of_threads"] = CORES  #change threads number by command paramter --cores/-j 16
+config["snakefile"] = SNAKEFILE
+config["snakefile_dir"] = SNAKEFILE_DIR
+#print(SNAKEFILE)
+
+#print(workflow.__dict__) #print all attributes
+#Establish snakefile and environment dictionaries
+snakefiles_dir = os.path.abspath(os.path.join(SNAKEFILE_DIR, "rules"))		#directory for additional snakefiles
+#environments_dir = os.path.abspath(os.path.join(SNAKEFILE_DIR, "envs"))	#directory for conda environment yaml files
+scripts_dir = os.path.abspath(os.path.join(SNAKEFILE_DIR, "scripts")) 			#directory for extra scripts used in workflow
+
+#running folders
+seq_type = config["seq_type"] 
+rawReadDir = config["workDir"] + "/" + config["run_info"]["raw"]
+qcDir = config["workDir"] + "/" + config["run_info"]["qc"]
+logDir = config["workDir"] + "/" + config["run_info"]["log"]
+trimDir = config["workDir"] + "/" + config["run_info"]["trim"]
+assembleDir = config["workDir"] + "/" + config["run_info"]["assemble"]
+classifyDir = config["workDir"] + "/" + config["run_info"]["classify"]
+annotateDir = config["workDir"] + "/" + config["run_info"]["annotate"]
+mapDir = config["workDir"] + "/" + config["run_info"]["map"]
+reportDir = config["workDir"] + "/" + config["run_info"]["report"]
+novelDir = config["workDir"] + "/" + config["run_info"]["novel"]
+cleanDir = config["workDir"] + "/" + config["run_info"]["clean"]
+blastDbType = config["blastDbType"]
+
+
+## Check whether input fastq files are compressed or not
+if  "input_format" in config.keys():
+	input_format = config["input_format"]
+else:
+	input_format = "fastq.gz"
+
+#Run bcl2fastq
+#bclOption = " --barcode-mismatches 0 --no-lane-splitting "  #for one index  
+bclOption = " --barcode-mismatches 1 --no-lane-splitting "  #for dual index 
+
+#setup soft link or copy fastq files to rawReadDir
+if fastqDir:
+	#set up soft link for fastq files if fastq folder is surpplied
+	if not os.path.exists(rawReadDir):
+		os.system("ln -sf " + fastqDir + " " + rawReadDir)
+	# Check if given path is link
+	if os.path.exists(rawReadDir) and os.path.islink(rawReadDir):
+		print(fastqDir, " soft link is built." )
+	else:
+		# soft link broken, copy files
+		if not os.path.isdir(rawReadDir): #check a folder exists
+			os.mkdir(rawReadDir) #make a folder
+		os.system("cp " + fastqDir + "/*." + input_format + " " + rawReadDir + "/")  
+
+elif flowCellDir and len(os.listdir(flowCellDir)) != 0 :
+	print("Runing bcl2fastq")
+	if not os.path.isdir(rawReadDir): #check a folder exists
+		os.mkdir(rawReadDir) #make a folder
+	os.system("bcl2fastq -R " + flowCellDir + " -o " + rawReadDir + bclOption + ">> " + rawReadDir + "/bcl2fastq.log 2>&1")
+	#--sample-sheet SampleSheet.csv
+
+if not os.listdir(rawReadDir): 
+	print(rawReadDir + " is empty. Exit!") 
+	sys.exit()
+
+#get sample names from rawReadDir
+SAMPLES = [os.path.basename(x) for x in glob.glob(rawReadDir + '/*.' +  input_format)]
+#remove 'Undetermined_*'
+SAMPLES = [x for x in SAMPLES if not x.startswith('Undetermined_')]
+#print(SAMPLES)
+#remove '_R1_001.fastq.gz'
+SAMPLES = [x.replace("." + input_format,"") for x in SAMPLES]
+if config["strand1"] != '':
+	SAMPLES = [re.sub(r"(.*)_%s.*" % config["strand1"], "\\1", x) for x in SAMPLES]
+
+if seq_type == 'pe':
+	SAMPLES = [re.sub(r"(.*)_%s.*" % config["strand2"], "\\1", x) for x in SAMPLES]
+SAMPLES = list(set(SAMPLES))  #remove duplicated from a list using set
+
+print("Samples: %s"  % ", ".join(SAMPLES))
+config["samples"] = SAMPLES  #save sample names in a global viriable
+#print("config samples: ", config['samples'])
+STRANDS = [config["strand1"], config["strand2"]]
+strand2 = config["strand2"]
+if len(SAMPLES) == 0:
+	sys.exit("No sample files found. Exit!")
+
+# load rules 
+include: os.path.join(snakefiles_dir, "trimReads.smk")
+include: os.path.join(snakefiles_dir, "assemble.smk")
+include: os.path.join(snakefiles_dir, "annotate.smk")
+
+# Single-end
+if (seq_type == "se"):
+	#QC raw reads
+	rawFastQC = expand(qcDir + "/raw_fastqc/{sample}_fastqc.zip", sample=SAMPLES)
+	trim = expand(trimDir + "/{sample}.trimmed.fastq.gz", sample=SAMPLES), #run trimmomatic 
+
+# Paired-ends
+elif (seq_type == "pe"):
+	#QC raw reads
+	rawFastQC = expand(qcDir + "/raw_fastqc/{sample}_{strand}_fastqc.zip", sample=SAMPLES, strand=STRANDS),
+	#Trim reads
+	trim = expand(trimDir + "/{sample}_R2.trimmed.fastq.gz", sample=SAMPLES) #, strand=STRANDS), #run trimmomatic 
+
+else:
+	sys.exit("Error: invalid 'seq_type parameter'. Must be 'se' or 'pe'")
+
+#Give the user options to blast against only viral sequences or all NCBI nt and nr databases
+runBlast = list()
+#Run Blastn againt NCBI viral ref
+viralblastn=expand(annotateDir + "/{sample}.blastn.txt", sample=SAMPLES)
+#Run Diamond/Blastx againt RVDB
+viralblastx=expand(annotateDir + "/{sample}.blastx.txt", sample=SAMPLES)
+runBlast.append(viralblastn)
+runBlast.append(viralblastx)
+if (blastDbType == "all"):
+	#Run Blastn againt NCBI nt
+	allBlastnt = expand(annotateDir + "/{sample}.blastnt0.txt", sample=SAMPLES)
+	#Run Diamond/Blastx againt NCBI nr
+	allBlastnr = expand(annotateDir + "/{sample}.blastnr0.txt", sample=SAMPLES)
+	runBlast.append(allBlastnt)
+	runBlast.append(allBlastnr)
+
+rule all:
+	input: #targets
+		#QC raw reads
+		rawFastQC,
+	
+		#Trim reads
+		trim,
+		
+		#assemble pathogen reads
+		expand(assembleDir + "/{sample}/contigs.fasta", sample=SAMPLES),
+
+		#annotate contigs using blastn and blastx
+		runBlast,
+
+		#merge blastn and blastx in a table
+		expand(annotateDir + "/{sample}.blast.nx.txt", sample=SAMPLES),
+
+	message: "Rule all"
+	shell: "echo Job done    `date '+%Y-%m-%d %H:%M'`"
