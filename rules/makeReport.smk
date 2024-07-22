@@ -66,14 +66,20 @@ rule blastn_local:
 			do
 				consensus0=$(basename $consensus '.consensus.N.fasta' )
 				refName="$(cut -d'.' -f2- <<<"$consensus0")"
-				#compare a contig and a consensus sequence, if a contig is longer than 90% of a consensus (without N), use it
-				python {scripts_dir}/compareSeq.py -r $refName -s {params.smpName} -b {annotateDir}/{params.smpName}.selectedRef.txt -g {assembleDir}/{params.smpName}/contigs.fasta -c $inputPath/{params.smpName}.$refName.consensus.N.fasta -o $inputPath/{params.smpName}.$refName.contig.fasta 
-				if [ -f $inputPath/{params.smpName}.$refName.contig.fasta ]; then
-					cat $inputPath/{params.smpName}.$refName.contig.fasta >> {output.consensusFile}
-				else
-					#change sequence title
-					sed "1s/^.*$/>{params.smpName}.$refName.consensus/" "$consensus" >> {output.consensusFile}  #give the sequence new title (sampleName.reference name)
+				
+				#in a re-run, the old reference is not in the selected file (.selectedRef.txt), check whehter the reference ($refName) is available, if yes, run compareSeq.py
+				#grep -q argument does not output the matched text, but only return the exit status code
+				if grep -q $refName {annotateDir}/{params.smpName}.selectedRef.txt; then
+					#compare a contig and a consensus sequence, if a contig is longer than 90% of a consensus (without N), use it
+					python {scripts_dir}/compareSeq.py -r $refName -s {params.smpName} -b {annotateDir}/{params.smpName}.selectedRef.txt -g {assembleDir}/{params.smpName}/contigs.fasta -c $inputPath/{params.smpName}.$refName.consensus.N.fasta -o $inputPath/{params.smpName}.$refName.contig.fasta 
+					if [ -f $inputPath/{params.smpName}.$refName.contig.fasta ]; then
+						cat $inputPath/{params.smpName}.$refName.contig.fasta >> {output.consensusFile}
+					else
+						#change sequence title
+						sed "1s/^.*$/>{params.smpName}.$refName.consensus/" "$consensus" >> {output.consensusFile}  #give the sequence new title (sampleName.reference name)
+					fi
 				fi
+
 			done
 		fi
 

@@ -1,0 +1,44 @@
+#filter blast description
+chromosome
+mitochondrion
+chloroplast
+plastid
+ribosomal RNA
+transcript
+Saccharomyces
+#filter environmental virus in Taxonomy
+cellular organisms; Eukaryota; Viridiplantae;
+Blacklegged tick associated ilarvirus
+Bremia lactucae associated ourmia-like virus
+Coniothyrium diplodiella negative-stranded RNA virus
+Erysiphales
+Erysiphe necator
+Plasmopara viticola lesion associated
+Tetranychus urticae-associated 
+Bundaberg bee virus
+Weivirus-like virus
+dicistro-like virus
+dicistrovirus
+Narnaviridae
+flea-associated
+Podosphaera
+Puccinia striiformis
+Penicillium sumatrense
+#filter viral reference
+DQ318792
+DQ318793
+DQ318794
+FJ751933
+FJ751926
+FJ751927
+FJ751930
+FJ662762
+MT815904
+ON993891
+MT815905
+MT561434
+MZ463747
+MT815905
+MZ463757
+OR024670
+LC758579
