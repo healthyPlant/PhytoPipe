@@ -64,21 +64,18 @@ if assembler == "Spades":
 			threads = config["number_of_threads"] 			
 		shell: #8 white space instead of tab to resolve "Command must be given as string after the shell keyword. "
 			"""
+			if [ ! -s {params.sampleDir} ]; then 
+				mkdir -p {params.sampleDir}
+			fi
+			touch {params.sampleDir}/contigs.fasta
 			if [ ! -z {params.paired_string} ]; then
 				#paired-end
-				#bbout1={params.sampleDir}"_"{strand1}".bbnorm.fastq.gz"
-				#bbout2={params.sampleDir}"_"{strand2}".bbnorm.fastq.gz"
-				#bbnorm.sh in={input.read[0]} in2={input.read[1]} out=$bbout1  out2=$bbout2 threads={threads} target=80 &>> {log.normlog}  #run bbnorm to reduce high depth
-				#spades.py --threads {threads} {params.param} -o {params.sampleDir} -1 $bbout1 -2 $bbout2  &>> {log.assemlog}
-				spades.py --threads {threads} {params.param} -o {params.sampleDir} -1 {input.read[0]} -2 {input.read[1]}  &>> {log.assemlog}
+				spades.py --threads {threads} {params.param} -o {params.sampleDir} -1 {input.read[0]} -2 {input.read[1]}  &>> {log.assemlog} || true
 				cp {params.sampleDir}/contigs.fasta {output.contigs}
 				rm -rf {params.sampleDir}
 			else
 				#single-end
-				#bbout={params.sampleDir}".bbnorm.fastq.gz"
-				#bbnorm.sh in={input} out=$bbout threads={threads} target=80 &>> {log.normlog}  #run bbnorm to reduce high depth
-				#spades.py --threads {threads} {params.param} -o {params.sampleDir} -s $bbout &>> {log.assemlog}
-				spades.py --threads {threads} {params.param} -o {params.sampleDir} -s {input} &>> {log.assemlog}
+				spades.py --threads {threads} {params.param} -o {params.sampleDir} -s {input} &>> {log.assemlog} || true
 				cp {params.sampleDir}/contigs.fasta {output.contigs}
 				rm -rf {params.sampleDir}
 			fi
@@ -110,10 +107,10 @@ else:
 			"""
 			if [ ! -z {params.paired_string} ]; then
 				#paired-end
-				Trinity {params.param} --CPU {threads} --max_memory {resources.mem}G --left {input.read[0]} --right {input.read[1]} --output {params.outdir} > {log.assemlog}
+				Trinity {params.param} --CPU {threads} --max_memory {resources.mem}G --left {input.read[0]} --right {input.read[1]} --output {params.outdir} > {log.assemlog} || true
 			else
 				#single-end		  
-				Trinity {params.param} --CPU {threads} --single {input} --max_memory {resources.mem}G --output {params.outdir} > {log.assemlog}
+				Trinity {params.param} --CPU {threads} --single {input} --max_memory {resources.mem}G --output {params.outdir} > {log.assemlog} || true
 			fi
 			mv {params.outdir}.Trinity.fasta {output.contigs}
 			rm {params.outdir}.Trinity.fasta.gene_trans_map
