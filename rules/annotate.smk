@@ -86,7 +86,7 @@ rule run_blastnt:
 		contigs = annotateDir + "/{sample}.contigs.l200.fasta",
 		microbialTids = microbialTaxonIds
 	output:
-		blastntOut = temp(annotateDir + "/{sample}.blastnt0.txt")  #blast NCBI all nt
+		blastntOut = annotateDir + "/{sample}.blastnt0.txt"  #blast NCBI all nt
 	message:
 		'''--- annotatate {wildcards.sample} contigs using blastn against NCBI nt.'''
 	params:
@@ -139,7 +139,7 @@ rule run_blastnr:
 	input:
 		contigs = annotateDir + "/{sample}.contigs.l200.fasta",
 	output:
-		blastnrOut = temp(annotateDir + "/{sample}.blastnr0.txt"),
+		blastnrOut = annotateDir + "/{sample}.blastnr0.txt",
 	message:
 		'''--- annotatate {wildcards.sample} contigs using blastx against NCBI nr'''
 	params:
