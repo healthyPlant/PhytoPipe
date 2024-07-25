@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 ######################################################################
 #Alex Hu <xiaojun.hu@usda.gov>
-#Updated: 01/18/2023
+#Updated: 07/25/2024
 #This program generates a txt report, including read mapping statistics, consensus/contig blast results and sequences
 #The report has the following contents:
 #1.	Total number of reads obtained and approximate read length
@@ -236,6 +236,7 @@ def setReport(reportDict, refNameFile, refDir, mapDir, ncbiBlastDir, sample, tri
         blastnFile = ncbiBlastDir + '/' + sample + '.' + ref + '.consensus.blastn.txt'
         blastncFile = ncbiBlastDir + '/' + sample + '.' + ref + '.contig.blastn.txt' 
         blastxFile = ncbiBlastDir + '/' + sample + '.' + ref + '.contig.blastx.txt' #for config blastx result, it's possible a novel virus
+        blastxcFile = ncbiBlastDir + '/' + sample + '.' + ref + '.consensus.blastx.txt' #for consensus blastx result, it's possible a highly mutated new variant of the virus, added on 7/25/2024
         blastSuffix = '.consensus.blastn.txt'
         if os.path.isfile(blastnFile):
             if coverage < coverageCutoff: 
@@ -250,6 +251,9 @@ def setReport(reportDict, refNameFile, refDir, mapDir, ncbiBlastDir, sample, tri
         elif os.path.isfile(blastxFile):
             blastSuffix = '.contig.blastx.txt'
             blast = getBlast(blastxFile)
+        elif os.path.isfile(blastxcFile): # added on 7/25/2024
+            blastSuffix = '.consensus.blastx.txt'
+            blast = getBlast(blastxcFile)
         else:
             blast = "nan\tnan\tnan\tnan\tnan"
 
