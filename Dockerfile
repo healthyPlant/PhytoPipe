@@ -208,7 +208,7 @@ RUN git clone https://github.com/lh3/seqtk.git  && \
 WORKDIR $SRC
 #install SPADes
 #RUN apt-get -qq -y install spades
-RUN wget http://cab.spbu.ru/files/release3.15.5/SPAdes-3.15.5-Linux.tar.gz && \
+RUN wget https://github.com/ablab/spades/releases/download/v3.15.5/SPAdes-3.15.5-Linux.tar.gz && \
     tar -xzf SPAdes-3.15.5-Linux.tar.gz  && \
     ln -s $SRC/SPAdes-3.15.5-Linux/bin/spades.py $BIN/spades.py
 
