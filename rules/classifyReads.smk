@@ -11,6 +11,9 @@ krakenDb = config["krakenDb"]
 kaijuDb = config["kaijuDb"]
 taxDb = config["taxDb"]
 seq_type = config["seq_type"]
+includeTaxids = config["includeTaxids"]
+
+targetTaxids = includeTaxids(",", " ")
 
 if (seq_type == "pe"):
 	paired_string = '--paired'
@@ -112,7 +115,8 @@ rule extractPathReads_se:
 		pathReadFile = temp(cleanDir + "/{sample}.pathogen.fastq"),
 		gzFile = cleanDir + "/{sample}.pathogen.fastq.gz"
 	params:
-		param = " -t 2 10239 4751 4762 --include-children ", #bacteria, virus, fungi, oomycetes taxonomy id #archaea(2157),
+		#param = " -t 2 10239 4751 4762 --include-children ", #bacteria, virus, fungi, oomycetes taxonomy id #archaea(2157),
+		param = " -t " + targetTaxids + " --include-children ",
 		unclassifiedRead = krakenDir + "/{sample}.kraken2.unclassified.fastq"
 	message:
 		'''--- {wildcards.sample} pathogen reads extraction'''
@@ -140,7 +144,8 @@ rule extractPathReads_pe:
 		gzFile1 = cleanDir + "/{sample}_R1.pathogen.fastq.gz",
 		gzFile2 = cleanDir + "/{sample}_R2.pathogen.fastq.gz"
 	params:
-		param = " -t 2 10239 4751 4762 --include-children ", #bacteria, virus, fungi, oomycetes taxonomy id #archaea(2157),
+		#param = " -t 2 10239 4751 4762 --include-children ", #bacteria, virus, fungi, oomycetes taxonomy id #archaea(2157),
+		param = " -t " + targetTaxids + " --include-children ",
 		unclassifiedRead1 = krakenDir + "/{sample}_R1.kraken2.unclassified.fastq",
 		unclassifiedRead2 = krakenDir + "/{sample}_R2.kraken2.unclassified.fastq"
 	message:

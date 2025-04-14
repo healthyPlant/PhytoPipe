@@ -19,6 +19,7 @@ mappingTool = config["mappingTool"]
 bwa_param = config["bwa_param"]
 bowtie2_param = config["bowtie2_param"]
 mapReadType = config["mapReadType"]
+monitorPathogen = config["monitorPathogen"]
 
 # Define input files
 def map_inputs(wildcards):
@@ -65,7 +66,7 @@ rule retrieve_references:
 		fi
 		#sort blastn.txt by bitsocre
 		sort -nk12,12 -r {input.blastnOut} > {input.blastnOut}.sorted    
-		python {scripts_dir}/selectCandidate.py -n {input.blastnOut}.sorted -x {input.blastxOut} -k {input.krakenReport} -j {input.kaijuTable} -c {input.contigs} -s {output.selectedRef} -a {output.blastnx} -l {output.refNamen} -r {output.refNamex}
+		python {scripts_dir}/selectCandidate.py -m {monitorPathogen} -n {input.blastnOut}.sorted -x {input.blastxOut} -k {input.krakenReport} -j {input.kaijuTable} -c {input.contigs} -s {output.selectedRef} -a {output.blastnx} -l {output.refNamen} -r {output.refNamex}
 		if [[ -s {output.refNamen} ]]; then   #check if file is not empty
 			bash {scripts_dir}/getSeq.sh {nt} {viralRefDb} {scripts_dir} {output.refNamen} {output.refSeq}
 		fi
@@ -88,7 +89,7 @@ rule map_ref:
 		'''--- mapping {wildcards.sample} reads to references.'''
 	priority: -10
 	params:
-	  mappingTool = mappingTool,
+	  	mappingTool = mappingTool,
 		seq_type = seq_type
 	threads: config["number_of_threads"]
 	log:

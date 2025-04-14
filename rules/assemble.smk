@@ -19,7 +19,6 @@ if (seq_type == "pe"):
 else:
 	paired_string = ''
 
-#print("Assemble samples: ", samples)
 # Define input files
 def assemble_inputs(wildcards):
 	if (mapReadType == 'clean'):
@@ -36,7 +35,6 @@ def assemble_inputs(wildcards):
 			reads = trimDir + "/{sample}.trimmed.fastq.gz"
 		else:
 			sys.exit("Error: invalid sequencing type parameter. Must be 'se' or 'pe'")
-	#print(reads)
 	return reads
 
 if assembler == "Spades":
@@ -69,15 +67,21 @@ if assembler == "Spades":
 			fi
 			touch {params.sampleDir}/contigs.fasta
 			if [ ! -z {params.paired_string} ]; then
-				#paired-end
 				spades.py --threads {threads} {params.param} -o {params.sampleDir} -1 {input.read[0]} -2 {input.read[1]}  &>> {log.assemlog} || true
 				cp {params.sampleDir}/contigs.fasta {output.contigs}
 				rm -rf {params.sampleDir}
 			else
-				#single-end
 				spades.py --threads {threads} {params.param} -o {params.sampleDir} -s {input} &>> {log.assemlog} || true
 				cp {params.sampleDir}/contigs.fasta {output.contigs}
 				rm -rf {params.sampleDir}
+			fi
+			
+			#if assembly failed, stop downstream rules for this sample
+			if [ ! -s {output.contigs} ]; then 
+				echo "Error: The sample {wildcards.sample} assembly failed! Please check the sample {wildcards.sample} read QC or change assembler Spades parameters. If the sample has a low read number, please remove it from the raw folder. Then rerun the pipeline." >> {log.assemlog}
+				echo "Error: The sample {wildcards.sample} assembly failed! Please check the sample {wildcards.sample} read QC or change assembler Spades parameters. If the sample has a low read number, please remove it from the raw folder. Then rerun the pipeline."
+				mkdir -p "{qcDir}/quast/{wildcards.sample}.quast"
+				exit 1
 			fi
 			"""
 else:
@@ -105,6 +109,7 @@ else:
 			threads = config["number_of_threads"] 			
 		shell:
 			"""
+			touch {params.outdir}.Trinity.fasta
 			if [ ! -z {params.paired_string} ]; then
 				#paired-end
 				Trinity {params.param} --CPU {threads} --max_memory {resources.mem}G --left {input.read[0]} --right {input.read[1]} --output {params.outdir} > {log.assemlog} || true
@@ -113,7 +118,17 @@ else:
 				Trinity {params.param} --CPU {threads} --single {input} --max_memory {resources.mem}G --output {params.outdir} > {log.assemlog} || true
 			fi
 			mv {params.outdir}.Trinity.fasta {output.contigs}
-			rm {params.outdir}.Trinity.fasta.gene_trans_map
+			if [ -f {params.outdir}.Trinity.fasta.gene_trans_map ]; then
+				rm {params.outdir}.Trinity.fasta.gene_trans_map
+			fi
+
+			#if assembly failed, stop downstream rules for this sample
+			if [ ! -s {output.contigs} ]; then 
+				echo "Error: The sample {wildcards.sample} assembly failed! Please check the sample {wildcards.sample} read QC or change assembler Trinity parameters. If the sample has a low read number, please remove it from the raw folder. Then rerun the pipeline." >> {log.assemlog}
+				echo "Error: The sample {wildcards.sample} assembly failed! Please check the sample {wildcards.sample} read QC or change assembler Trinity parameters. If the sample has a low read number, please remove it from the raw folder. Then rerun the pipeline."
+				mkdir -p "{qcDir}/quast/{wildcards.sample}.quast"
+				exit 1
+			fi
 			"""
 
 rule run_quast:
@@ -129,7 +144,13 @@ rule run_quast:
 	log:
 		logDir + "/quast/{sample}.log"
 	shell:
-	  "quast.py {input} -m 100 -o {output} 2> {log} 1>&2"
+		"""
+		if [ -s {input} ]; then
+			quast.py {input} -m 100 -o {output} 2> {log} 1>&2
+		else
+			mkdir -p {output}
+		fi
+		"""
 
 rule multiqc_quast:
 	"""

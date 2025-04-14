@@ -22,7 +22,75 @@ nt = config["blastnDb"]  #NCBI blastdb nt
 nr = config["blastxDb"]  #diamond format NCBI nr
 samples = config["samples"]    
 monitorPathogen = config["monitorPathogen"]
-blastEvalue = config["blastEvalue"]
+excludeTaxids = config["excludeTaxids"]
+
+filterKeyFile = ""
+try:
+    filterKeyFile = config["filterKeys"]
+except KeyError:
+    filterKeyFile = ""
+
+samples = config["samples"]    
+
+blastnEvalue = "1e-40" 
+blastxEvalue = "1e-20"
+
+def aggregate_input(wildcards):
+	"""
+	Blast rule depends on the contigs from assembly, if no contigs, skip blast; refNamex is from blastx; refNamen is from combine blastn and mapping
+	'aggregate_input' function return values are the rule aggregate input, which are another two rules outputs
+	"""
+	fn = checkpoints.extract_contig.get(sample=wildcards.sample).output[0]
+
+	if os.stat(fn).st_size > 0: #if having contigs, run blast and mapping
+		chosenfile = reportDir + "/{sample}.consensus.blastn.txt"  #rule aggregate_blast output
+	else:
+		chosenfile = logDir + "/assemble/{sample}.assembly.failed"  #rule check_contig output
+
+	return chosenfile
+
+rule check_contig:
+	"""
+	Alternative rule for checkpoint extract_contig. Mark assembly failed samples 
+	"""
+	input:
+		assembleDir + "/{sample}/contigs.fasta"
+	output:
+		logDir + "/assemble/{sample}.assembly.failed"
+	message:
+		'''--- Check contig file size from assembly.'''
+	params:
+		annotateDir + "/{sample}.selectedRef.txt",
+	shell:
+		"""
+		if [ ! -s {input} ]; then   #check if the contig file is not empty
+			touch {output}
+			touch {params}
+		fi
+		"""
+
+
+rule aggregate_blast:
+	"""
+	Aggregate consensus/contig blast result for checkpoint extract_contig
+	"""
+	input:
+		aggregate_input
+	output:
+		logDir + "/checkPoint/{sample}.blastn.done"
+	message:
+		'''--- Aggregate blastn/x results for final consensus/contigs.'''
+	shell:
+		"""
+		touch {output}
+		#get novel virus mapping information
+		if [ -d {novelDir}/map2Contig ]; then
+			found=$(find {novelDir}/map2Contig -name '*.fasta' | wc -l)
+			if (( $found > 0 )); then
+				python {scripts_dir}/getContigMapInfo.py -w {workDir} -o {reportDir}"/novelVirusMapping.txt"
+			fi
+		fi
+		"""
 
 rule blastn_local:
 	"""
@@ -32,27 +100,29 @@ rule blastn_local:
 		consensus = mapDir + "/map2Ref/{sample}",
 		contig = novelDir + "/finalAssembly/{sample}"
 	output:
-		done = touch(logDir + "/checkPoint/{sample}.blastn.done"),
+		#done = touch(logDir + "/checkPoint/{sample}.blastn.done"),
 		consensusFile = temp(reportDir + "/{sample}.consensus.fa"),  
-		blastnResult = temp(reportDir + "/{sample}.consensus.blastn.txt"),
+		blastnResult = temp(reportDir + "/{sample}.consensus.blastn.txt"), 
 	message:
 		"""--- {wildcards.sample} local Blast consensus/contigs against NCBI nt/nr."""
 	priority: -10
-	threads: 8
+	threads: 16
 	log:
 		logDir + "/annotate/{sample}.finalConsensus.blastn.log"
 	params:
-		blastn = " -word_size 11 -max_target_seqs 1 -evalue 1e-100 -perc_identity 70 -outfmt \"6 qseqid sseqid pident length qlen slen qstart qend sstart send evalue bitscore stitle qcovs \" ", #qcovs:Query Coverage Per Subject
-		blastx = " --max-target-seqs 1 -e  " + blastEvalue + "  --outfmt 6 qseqid sseqid pident length qlen slen qstart qend sstart send evalue bitscore stitle scovhsp ", #scovhsp:Subject Coverage Per HSP*
+		blastn = " -word_size 11 -max_target_seqs 1 -evalue " + blastnEvalue + " -outfmt \"6 qseqid sseqid pident length qlen slen qstart qend sstart send evalue bitscore stitle qcovs \" ", #qcovs:Query Coverage Per Subject
+		blastx = " --max-target-seqs 1 -e  " + blastxEvalue + "  --outfmt 6 qseqid sseqid pident length qlen slen qstart qend sstart send evalue bitscore stitle scovhsp ", #scovhsp:Subject Coverage Per HSP*
 		blastnFailed = reportDir + "/{sample}.consensus.blastn.failed.fasta",
 		blastxResult = reportDir + "/{sample}.consensus.blastx.txt",
 		out = reportDir + "/ncbiBlast",
 		smpName = "{sample}"  #Note: {sample} can't be directly used in shell 
 	shell:
 		"""
+		#set -x  #for shell debug
 		#create empty files in case no virus found in sample
 		touch {output.consensusFile}
 		touch {output.blastnResult}
+		
 		#combine all final consensus/contig to a file
 		if [ ! -d  {reportDir}/ncbiBlast ]; then
 			mkdir -p {reportDir}/ncbiBlast
@@ -79,7 +149,6 @@ rule blastn_local:
 						sed "1s/^.*$/>{params.smpName}.$refName.consensus/" "$consensus" >> {output.consensusFile}  #give the sequence new title (sampleName.reference name)
 					fi
 				fi
-
 			done
 		fi
 
@@ -92,7 +161,7 @@ rule blastn_local:
 			do
 				refName=$(basename $contig '.contig.fasta')  #remove '.contig.fasta'
 				#if the contig is in the file, replace it using the contig from the final assembly
-				repName=$(cat {output.consensusFile} | grep $refName | cut -d' ' -f1 | sed 's/>//')
+				repName=$(cat {output.consensusFile} | grep $refName | cut -d' ' -f1 | sed 's/>//') || true
 				echo $repName
 				if [ ! -z $repName ]; then 
 					filterbyname.sh in={output.consensusFile} out=temp.fa names=$repName include=f  #remove the contig by its name
@@ -101,13 +170,24 @@ rule blastn_local:
 					rm -rf temp.fa
 				fi
 			done
-			
 		fi
-		
 
 		#run blastn against local NCBI nt database
 		if [ -f {output.consensusFile} ] && [ -s  {output.consensusFile} ]; then
-			blastn -db {nt} -num_threads {threads} -query {output.consensusFile} -out {output.blastnResult} {params.blastn} &>> {log};
+			#make soft link for the file taxonomy4blast.sqlite3, which is required for blastn with the parameter -taxids 
+			from=$(dirname {nt})
+			to=`pwd`
+			if [[ -e $from/taxonomy4blast.sqlite3 && ! -e $to/taxonomy4blast.sqlite3 ]]; then
+				ln -s $from/taxonomy4blast.sqlite3 $to/
+			fi
+			if [ -e $to/taxonomy4blast.sqlite3 ]; then
+				#run parallel blastn with excluded taxons, each parallel 4 sequences using 4 threads
+				cat {output.consensusFile} | parallel -q -j {threads} -N 4 --recstart '>' --pipe blastn -task megablast -db {nt} -num_threads 4 -negative_taxids {excludeTaxids} {params.blastn} > {output.blastnResult}  2>> {log} 
+				#rm -f $to/taxonomy4blast.sqlite3
+			else
+				blastn -task megablast -db {nt} -num_threads {threads} -query {output.consensusFile} -out {output.blastnResult} {params.blastn} &>> {log}
+			fi
+
 			#split blastn result to different files, like remote blastn results
 			python {scripts_dir}/splitBlastResult.py -s {output.consensusFile} -b {output.blastnResult} -f {params.blastnFailed} -t blastn -o {params.out} 
 			#if blastn failed, try blastx
@@ -126,17 +206,21 @@ rule generate_report:
 	Generate the final report
 	"""
 	input:
-		blastDone = expand(logDir + "/checkPoint/{smp}.blastn.done", smp=samples),
-		rawQC = qcDir + "/multiqc/raw_multiqc.html",
-		trimmedQC = qcDir + "/multiqc/trimmed_multiqc.html",
-		refSeqDone = expand(logDir + "/checkPoint/{smp}.retrieveRef.done", smp=samples),
-		map2RefDone = expand(logDir + "/checkPoint/{smp}.map2Ref.done", smp=samples),
-		map2ContigDone = expand(logDir + "/checkPoint/{smp}.map2Contig.done", smp=samples),
+		#rawQC = qcDir + "/multiqc/raw_multiqc.html",
+		#trimmedQC = qcDir + "/multiqc/trimmed_multiqc.html",
+		kaijuDone = expand(classifyDir + "/{sample}.kaiju_krona.html", sample=samples),
+		krakenDone = expand(classifyDir + "/{sample}.kraken2.report.html", sample=samples),
+		blastDone = expand(logDir + "/checkPoint/{sample}.blastn.done",sample=samples),
+		#refSeqDone = expand(logDir + "/checkPoint/{sample}.retrieveRef.done", sample=samples),
+		#map2RefDone = expand(logDir + "/checkPoint/{sample}.map2Ref.done", sample=samples),
+		#map2ContigDone = expand(logDir + "/checkPoint/{sample}.map2Contig.done", sample=samples),
 	output:
 		rpt = reportFile,
 		log = logDir + "/report/report.log"
 	message:
 		'''--- Generate the final report.'''
+	params:
+		sampleInfo = keyExcelFile
 	priority: -100
 	shell:
 		"""
@@ -145,28 +229,60 @@ rule generate_report:
 		else
 			python {scripts_dir}/getReport.py -f {strand1} -r {strand2} -a {acronymDb} -o {output.rpt} -w {workDir} > {output.log}
 		fi
+
+		rm -rf rm {reportDir}/*.failed.fasta
+
+		if [ -e `pwd`/taxonomy4blast.sqlite3 ]; then
+			rm -rf `pwd`/taxonomy4blast.sqlite3
+		fi
+
 		"""
+
+rule sum_readStats:
+	"""
+	Summary raw read stats 
+	"""
+	input:
+		contigs = expand(assembleDir + "/{sample}/contigs.fasta", sample=samples),
+		raw_multiqc = qcDir + "/multiqc/raw_multiqc.html",
+		trimmed_multiqc = qcDir + "/multiqc/trimmed_multiqc.html",
+		quast_multiqc = qcDir + "/multiqc/quast_multiqc.html",
+	output:
+		reportDir + "/qcReadNumber.txt"
+	message:
+		'''--- Summary raw read stats.'''
+	shell:
+		"""
+		#get QC read number
+		if [ ! {strand1} ]; then
+			python {scripts_dir}/getReadNumber.py -w {workDir} -f "" -m {fastq_format} -o {output}
+		else
+			python {scripts_dir}/getReadNumber.py -w {workDir} -f {strand1} -r {strand2} -m {fastq_format} -o {output}
+		fi
+		"""
+
 
 rule generate_htmlReport:
 	"""
 	Generate the final html report
 	"""
 	input:
-		rpt = rules.generate_report.output.rpt   #reportFile,
+		rpt = rules.generate_report.output.rpt,   #reportFile (report.txt),
+		qcrn = reportDir + "/qcReadNumber.txt",
 	output:
-		qcReadNumber = reportDir + "/qcReadNumber.txt",
+		log = logDir + "/report/report.log",
 		html = htmlReport
 	message:
 		'''--- Generate the final html report.'''
+	params:
+		sampleInfo = keyExcelFile,
+		filterKey = filterKeyFile,
+		filteredRpt = reportDir + "/report.filtered.txt",
+		pgqpReport = reportDir + "/report.pgqp.txt",
+		simpleReport = reportDir + "/report.simple.txt"
 	priority: -200
 	shell:
 		"""
-		#get QC read number
-		if [ ! {strand1} ]; then
-			python {scripts_dir}/getReadNumber.py -w {workDir} -m {fastq_format} -o {output.qcReadNumber}
-		else
-			python {scripts_dir}/getReadNumber.py -w {workDir} -f {strand1} -r {strand2} -m {fastq_format} -o {output.qcReadNumber}
-		fi
 		#get novel virus mapping information
 		found=$(find {novelDir}/map2Contig -name '*.fasta' | wc -l)
 		if (( $found > 0 )); then
@@ -187,7 +303,12 @@ rule generate_htmlReport:
 			cp {workDir}/annotation/*.blastnr.summary.txt {reportDir}/blastnx/
 		fi
 
+		#Filter report using filter keys
+		if [ ! -z {params.filterKey} ] && [ -f  {params.filterKey} ]; then
+			python {scripts_dir}/filterReport.py {input.rpt} {params.filterKey} {params.filteredRpt} >> {output.log}
+		fi
+
 		#generate a html report
 		python {scripts_dir}/getHtmlReport.py {workDir} {monitorPathogen} {reportDir} {input.rpt} {output.html}
-		rm -rf {reportDir}/*.failed.fasta
+
 		"""

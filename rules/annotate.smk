@@ -15,24 +15,40 @@ blastnTaxondb = config["blastnViralTaxonDb"]
 nt = config["blastnDb"]  #NCBI blastdb nt
 nr = config["blastxDb"]  #diamond format NCBI nr
 microbialTaxonIds = config["microbialTaxon"]
+includeTaxids = config["includeTaxids"]
 blastEvalue = config["blastEvalue"]
 
 #http://www.metagenomics.wiki/tools/blast/blastn-output-format-6
-#download ncbi nr fasta sequences
-#wget ftp://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/nr.gz
-#make diamond nr database
-#diamond makedb --in nr.gz -d nr
-#download ncbi blastn db
-#ftp://ftp.ncbi.nlm.nih.gov/blast/db/${db}.tar.gz
+
+checkpoint extract_contig:
+	"""
+	Extract contigs with length >200bp. Use checkpoint to handle assembly failed samples. For Snakemake >=v5.4
+	"""
+	input:
+		assembleDir + "/{sample}/contigs.fasta",
+	output:
+		annotateDir + "/{sample}.contigs.l200.fasta",
+	message:
+		'''--- extract {wildcards.sample} contigs '''
+	shell:
+		"""
+		if [ -s {input} ]; then   #check if the contig file is not empty
+			seqtk seq -L 200 {input} > {output}   #only use length >200bp contigs
+		else
+			echo "Error: The contig file {input} does not exist or is empty." 
+			touch {output}
+		fi
+		"""
 
 rule run_blastn:
 	"""
 	Annotate contigs by blastn
+		#seqtk seq -L 200 {input} > {output.contigL200}   #only use length >200bp contigs
+		#blastn -db {blastndb} -num_threads {threads} -query {output.contigL200} -out {output.blastnOut0} {params} &>> {log}
 	"""
 	input:
-		assembleDir + "/{sample}/contigs.fasta"
+		annotateDir + "/{sample}.contigs.l200.fasta"
 	output:
-		contigL200 = annotateDir + "/{sample}.contigs.l200.fasta",
 		blastnOut0 = temp(annotateDir + "/{sample}.blastn0.txt"),
 		blastnOut = annotateDir + "/{sample}.blastn.txt",  #blast the viral reference
 		blastnKrona = annotateDir + "/{sample}.blastn.krona.html"
@@ -40,13 +56,12 @@ rule run_blastn:
 		'''--- annotatate {wildcards.sample} contigs using blastn.'''
 	params:
 		" -word_size 11 -max_target_seqs 5 -evalue " + blastEvalue + " -outfmt \"6 qseqid sseqid pident length qlen slen qstart qend sstart send evalue bitscore stitle \" " #scomnames staxids sscinames sskingdoms
-	threads: 8  #threads > 4, performance do not improve lots
+	threads: 4  #threads > 4, performance do not improve lots
 	log:
 		logDir + "/annotate/{sample}.blastn.log",
 	shell:
 		"""
-		seqtk seq -L 200 {input} > {output.contigL200}   #only use length >200bp contigs
-		blastn -db {blastndb} -num_threads {threads} -query {output.contigL200} -out {output.blastnOut0} {params} &>> {log} 
+		blastn -db {blastndb} -num_threads {threads} -query {input} -out {output.blastnOut0} {params} &>> {log}  
 		python {scripts_dir}/setBlastTaxon.py -b {output.blastnOut0} -t {blastnTaxondb} -o {output.blastnOut} 
 		ktImportBLAST -o {output.blastnKrona} {output.blastnOut0}
 		"""
@@ -71,11 +86,21 @@ rule run_blastx:
 		logDir + "/annotate/{sample}.blastx.log",
 	shell:
 		"""
-		diamond blastx -d {blastxdb} -q {input} -p {threads} -o {output.blastxOut0} {params} &>> {log} 
-		python {scripts_dir}/setBlastTaxon.py -b {output.blastxOut0} -t {blastxTaxondb} -o {output.blastxOut} 
-		#limit Blast out to ktImportBLAST
-		awk -F "\t" 'OFS="\t" {{ split($2,a,"|");$2=a[5]; if($11 < 1e-100) print }}' {output.blastxOut0} | sort -k 11,11g | head -10000 > {output.blastxOut1}
-		ktImportBLAST -o {output.blastxKrona} {output.blastxOut1}
+		if [ -s {input} ]; then
+			diamond blastx -d {blastxdb} -q {input} -p {threads} -o {output.blastxOut0} {params} &>> {log} 
+			python {scripts_dir}/setBlastTaxon.py -b {output.blastxOut0} -t {blastxTaxondb} -o {output.blastxOut} 
+			#limit Blast out to ktImportBLAST
+			awk -F "\\t" 'OFS="\\t" {{ split($2,a,"|");$2=a[5]; if($11 < 1e-100) print }}' {output.blastxOut0} | sort -k 11,11g | head -10000 > {output.blastxOut1}
+			ktImportBLAST -o {output.blastxKrona} {output.blastxOut1}
+		else	
+			echo "Error: The contig file {input} does not exist or is empty." >>{log}
+			touch {output.blastxOut0}
+			touch {output.blastxOut1}
+			touch {output.blastxOut}
+			touch {output.blastxKrona}
+			#exit 1
+		fi
+
 		"""
 
 rule run_blastnt:
@@ -91,12 +116,24 @@ rule run_blastnt:
 		'''--- annotatate {wildcards.sample} contigs using blastn against NCBI nt.'''
 	params:
 		" -max_target_seqs 1 -evalue  " + blastEvalue + " -outfmt \"6 qseqid sseqid pident length qlen slen qstart qend sstart send evalue bitscore stitle \" " #-task megablast, megablast faster than blast for intraspecies comparison as it uses a large word-size of 28bp, but it misses something
-	threads: 8 
+	threads: 16 
 	log:
 		logDir + "/annotate/{sample}.blastnt.log"
 	shell:
 		"""
-		blastn -db {nt} -num_threads {threads} -query {input.contigs} -out {output.blastntOut} -taxidlist {input.microbialTids} {params} &>> {log} || true 
+		#make soft link for the file taxonomy4blast.sqlite3, which is required for blastn with the parameter -taxids 
+		from=$(dirname {nt})
+		to=`pwd`
+		if [[ -e $from/taxonomy4blast.sqlite3 && ! -e $to/taxonomy4blast.sqlite3 ]]; then
+			ln -s $from/taxonomy4blast.sqlite3 $to/
+		fi
+		if [ -e $to/taxonomy4blast.sqlite3 ]; then
+			#run parallel blastn, each parallel 4 sequences using 4 threads
+			cat {input.contigs} | parallel -q -j {threads} -N 4 --recstart '>' --pipe blastn -task megablast -db {nt} -num_threads 4 -taxids {includeTaxids} {params} > {output.blastntOut} 2>> {log} 
+			#rm -f $to/taxonomy4blast.sqlite3
+		else
+			blastn -task megablast -db {nt} -num_threads {threads} -query {input.contigs} -out {output.blastntOut} -taxidlist {input.microbialTids} {params} &>> {log} 
+		fi
 		"""
 
 rule summarize_blastnt:
@@ -149,7 +186,13 @@ rule run_blastnr:
 		logDir + "/annotate/{sample}.blastnr.log"
 	shell:
 		"""
-		diamond blastx -d {nr} -q {input.contigs} -p {threads} -o {output.blastnrOut} {params} &>> {log}
+		if [ -s {input} ]; then
+			diamond blastx -d {nr} -q {input.contigs} -p {threads} -o {output.blastnrOut} {params} &>> {log}
+		else
+			echo "Error: The contig file {input} does not exist or is empty. " >>{log}
+			#exit 1
+		fi
+		
 		"""
 
 rule summarize_blastnr:
