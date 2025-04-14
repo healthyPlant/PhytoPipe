@@ -1,13 +1,14 @@
 #Sankemake setting file
 #For single-end file
 #seq_type: 'se'  #'se' for single-end, 'pe' for paired-end  
-#strand1: ''  #'' for single-end file name without R1, 'R1' for single-end file name end with R1 or R1_001
-#strand2: 'R2'  # keep it even no paired R2 file
+#strand1: ''  #'' for single-end file name without R1, 'R1' for single-end file name end with R1,  or 'R1_001' for regular illumina output
+#strand2: 'R2'  # keep it even no paired R2 file.  
 
 #For paired-end file
+#'R1', ''R2' for pair-end file name with R1 and R2; 'R1_001' and 'R2_001' for regular illumina output. '1' and '2' for NCBI 
 seq_type: 'pe'  #'se' for single-end, 'pe' for paired-end  
-strand1: 'R1'  # for pair-end file name with R1 and R2 or R1_001 and R2_001
-strand2: 'R2'  
+strand1: 'R1'  # 'R1', 'R1_001', '1'
+strand2: 'R2'  # 'R2', 'R2_001', '2'
 
 input_format: 'fastq.gz'  #read file format. 'fq.gz' is an option 
 number_of_threads: 16 #number of computer cores or threads
@@ -46,6 +47,9 @@ acronymDb: /path/to/PhytoPipe/db/ICTV_virus_acronym.txt
 #each line have a specices taxonomy ID and name
 monitorPathogen: /path/to/PhytoPipe/db/monitorPathogen.txt
 
+#key words for filtering result, like ribosomal, chromosome, chloroplast, mitochondria
+filterKeys: /path/to/PhytoPipe/db/filterKeyWords.txt
+
 #microbial taxon ids
 microbialTaxon: /path/to/database/microbial.tids
 
@@ -54,7 +58,7 @@ microbialTaxon: /path/to/database/microbial.tids
 #'all' is for blasting NCBI nt and nr. It could take a long time to finish blastn
 blastDbType: virus # or 'all' 
 #Blast E-value cutoff 
-blastEvalue: 1e-10
+blastEvalue: 1e-20
 
 #reads used for assembly or mapping to a reference
 #'trimmed' is for all trimmed reads including host reads
@@ -70,8 +74,12 @@ trimmomatic_param: " LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:36 "
 #'Trinity' or 'Spades'
 assembler: Trinity # 'Spades'
 #Spades parameters. Different kmers (k) may generate different results. 
-spades_param: " --only-assembler --phred-offset 33 -k 21,51,71,91 "
+spades_param: " " #" --only-assembler --phred-offset 33 -k 21,31,41,51,71,91,121 "
 
+#to limit blastn (>=v2.15) search in interesting taxons, such as: 2 (bacteria), 10239 (viruses), 4751 (fungi), 4762 (oomycetes)
+includeTaxids: "2,10239,4751,4762"
+#to exclude unwanted taxons in blastn search (>=v2.15), such as 38018 (bacteriophage),  32630 (synthetic construct), 451344 (unclassified archaeal viruses), 12333 (unclassified bacterial viruses), 552364 (unclassified virophages), 186616 (environmental samples)
+excludeTaxids: "38018,32630,451344,12333,552364,186616"
 
 #mapping tool
 #'bwa' or 'bowtie'
