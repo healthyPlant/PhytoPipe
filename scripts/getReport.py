@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 ######################################################################
 #Alex Hu <xiaojun.hu@usda.gov>
-#Updated: 07/25/2024
+#Updated: 01/18/2023
 #This program generates a txt report, including read mapping statistics, consensus/contig blast results and sequences
 #The report has the following contents:
 #1.	Total number of reads obtained and approximate read length
@@ -221,6 +221,8 @@ def setReport(reportDict, refNameFile, refDir, mapDir, ncbiBlastDir, sample, tri
     readStat0 = reportDict[sample + "|nan"]
     #print(readStat0)
     for ref in refName:
+        print("Processing: ", sample, ref)
+        #get reference file, bam file and coverage file
         refFile = refDir + '/' + sample + '/' + ref + '.fasta'
         bamFile = mapDir + '/' + sample + '/' + ref + '.sorted.bam'
         coverageFile = mapDir + '/' + sample + '/' + ref + '.coverage.txt'

@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 ######################################################################
 #Alex Hu <xiaojun.hu@usda.gov>
-#Updated: 06/15/2023
+#Updated: 03/26/2025
 #This program selects top references from kraken2, kaiju, blastn and blastx resultx
 #
 #Required Parameters:
+#   -m, --monitor X.........................Monitor pathogens file
 #   -n, --blastn X..........................Blastn table file
 #   -x, --blastx X..........................Blastx table file
 #   -k, --kraken X..........................Kraken2 report
@@ -21,8 +22,8 @@ from Bio import SeqIO
 
 kraken_viral_cutoff = 5 #mapped viral reads cut off
 kaiju_cutoff = 100 # use reads number as cutoff instead of percentage 0.05
-evalue_cutoff_blastn = 1e-30 #blastn evalue cut off 
-evalue_cutoff_blastx = 1e-40 # blastx evalue for reference filter
+evalue_cutoff_blastn = 1e-50 #blastn evalue cut off, 1e-30
+evalue_cutoff_blastx = 1e-60 # blastx evalue for reference filter, 1e-40
 identity_cutoff = 80  #blastn identity cutoff
 virod_cutoff = 1e-10  #E-value cutoff for viroid blastn
  
@@ -32,7 +33,7 @@ def parseArguments():
     Get arguments
     """
     parser = argparse.ArgumentParser(description = "Select top reference from blastn and blastx result.")
-    parser = argparse.ArgumentParser(description = "Select top reference from blastn and blastx result.")
+    parser.add_argument('-m','--monitor',dest='monitor_file', required=True, default="", help='Monitor pathogens file')
     parser.add_argument('-n','--blastn',dest='blastn_file', required=True, default="", help='Blastn against nt database result')
     parser.add_argument('-x','--blastx',dest='blastx_file', required=True, default="", help='Blastx against protein database (nr or virus RVDB) result')
     parser.add_argument('-k','--kraken',dest='kraken_file', required=True, default="", help='Kraken2 report')
@@ -44,6 +45,19 @@ def parseArguments():
     parser.add_argument('-r','--listx',dest='output_blastxRef', required=True, default="", help='selected reference name list from blastx' )
     parser.set_defaults(append=False)
     return parser.parse_args()
+
+#1825924 Barley virus G
+def getMonitorPathogen(mpFile):
+    """
+    Get monitor pathogens from a file
+    """
+    mpDict = {}
+    with open(mpFile) as f:
+        for line in f:
+            line = line.rstrip()
+            cells = line.split("\t")
+            mpDict[cells[0]] = cells[1]  #taxon id => taxon name
+    return mpDict
 
 #################################### Get blast table result function ####################################
 #blastn format: qseqid sseqid pident length qlen slen qstart qend sstart send evalue bitscore stitle taxonid taxonpath
@@ -144,7 +158,7 @@ def getKraken(kFile):
     return krakenDict
 
 #################################### Select top reference from both blastx and blastn  ####################################
-def selectTop(blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cutoff_blastn, evalue_cutoff_blastx):
+def selectTop(mpDict, blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cutoff_blastn, evalue_cutoff_blastx):
     """
     Select top candidate references based on blastn E-value (pathogen:0.0, viroid <1e-30) or blastx (e-value == 0.0 or found in both blastx and blastn) or both kaiju and blastx/blastn found it
     """
@@ -159,10 +173,15 @@ def selectTop(blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cutoff_blast
             #print("Blastn ", id, " ", blastnDict[id][13])
             #del blastnDict[id]  #delete the key, value
         #2)select a viroid if its evalue<=1e-10 and have viroid in the annotation
-        if("viroid" in blastnDict[id][12] and float(blastnDict[id][10]) <= virod_cutoff):  
+        elif("viroid" in blastnDict[id][12] and float(blastnDict[id][10]) <= virod_cutoff):  
             outDict[id] = "\t".join(blastnDict[id]) + "\tBlastn"
             taxonDict[blastnDict[id][13]] = 1
             #print("Blastn viroid", id, " ", blastnDict[id][13])
+        #3)select a monitor pathogen with evalue<=1e-60
+        elif(blastnDict[id][13] in mpDict and float(blastnDict[id][10]) <= 1e-100):  #monitor pathogen
+            outDict[id] = "\t".join(blastnDict[id]) + "\tBlastn"
+            taxonDict[blastnDict[id][13]] = 1
+            #print("Blastn monitor ", id, " ", blastnDict)
 
     #2. select a virus if a viral protein is identified (evalue=0)
     for id in blastxDict:
@@ -211,7 +230,7 @@ def selectTop(blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cutoff_blast
        for tid in kaijuDict:
             #if taxon_id in both kaiju and blastx and blastx evalue < cutoff, keep it
             if tid == blastxDict[id][13] and float(blastxDict[id][10]) <= evalue_cutoff_blastx: #if the same taxon id
-                if id not in outDict and blastxDict[id][13] not in taxonDict and float(kaijuDict[tid]) >= kaiju_cutoff: #if Kaiju reads# >=100:
+                if id not in outDict and blastxDict[id][13] not in taxonDict and (float(kaijuDict[tid]) >= kaiju_cutoff or float(blastxDict[id][10]) < 1e-200): #if Kaiju reads >=100 or protein e-value < 1e-200:
                     #print("Kaiju + Blastx ", id, ", taxon:", blastxDict[id][13], ", contig length:", blastxDict[id][4])
                     #for a taxon has many contigs, select the longest contig
                     tax = blastxDict[id][13]
@@ -314,6 +333,7 @@ def mergeBlast(blastnDict, blastxDict, contig_file):
 def main():
     ### Input arguments
     options = parseArguments()
+    monitor_file = options.monitor_file
     blastn_file = options.blastn_file
     blastx_file = options.blastx_file
     kraken_file = options.kraken_file
@@ -324,13 +344,14 @@ def main():
     output_file4 = options.output_blastxRef
     contig_file = options.contig_file
     
+    mpDict = getMonitorPathogen(monitor_file)
     blastnDict = getBlastn(blastn_file)
     #print(blastnDict)
     blastxDict = getBlastx(blastx_file)
     krakenDict = getKraken(kraken_file)
     kaijuDict = getKaiju(kaiju_file)
 
-    outDict1 = selectTop(blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cutoff_blastn, evalue_cutoff_blastx)
+    outDict1 = selectTop(mpDict, blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cutoff_blastn, evalue_cutoff_blastx)
     #output selected blast result
     fout1 = open(output_file1, 'w')
     fout1.write("Contig\tReference\tPercent_identity\tAlignment_length\tContig_length\tReference_length\tAlign_contig_start\tAlign_contig_end\tAlign_ref_start\tAlign_ref_end\tE-value\tBitscore\tReference_name\tTaxonomy_id\tSpecies\tTaxonomy_path\tblastType\n") 

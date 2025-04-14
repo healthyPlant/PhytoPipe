@@ -113,10 +113,6 @@ def sumQual(fastqFolder, input_format, strand1, strand2):
     #convert set to list
     for i in range(len(outputs)):
         outputs[i] = list(outputs[i])
-    #remove _001 in sample name    
-    for output in outputs:
-        if output[0].endswith("_001"):
-            output[0] = output[0].replace("_001", "") 
                
     #check paired-end or single-end read
     paired = False
@@ -132,11 +128,11 @@ def sumQual(fastqFolder, input_format, strand1, strand2):
     avgQualDictR2 = {}
 
     for output in outputs:
-        if output[0].endswith(strand1):
-            sname = output[0].replace("_"+strand1, "")
+        if strand1 and output[0].endswith(strand1):
+            sname = re.sub(rf"_{strand1}$", "", output[0]) 
             avgQualDictR1[sname] = output[1:len(output)]
-        elif output[0].endswith(strand2): #paired-end read
-            sname = output[0].replace("_"+strand2, "")
+        elif strand2 and output[0].endswith(strand2): #paired-end read
+            sname = re.sub(rf"_{strand2}$", "", output[0])
             avgQualDictR2[sname] = output[1:len(output)]
         else: #single-end read
             avgQualDict[output[0]] = output[1:len(output)]
@@ -167,7 +163,7 @@ def parseArguments():
 def main():
     ### Input arguments
     options = parseArguments()
-    workdir = options.workdir  #'/ppq/data2/pgqp_pipeline/Run45'
+    workdir = options.workdir  
     strand1 = options.strand1  #R1
     strand2 = options.strand2  #R2
     input_format = options.format #"fastq.gz"
@@ -178,6 +174,7 @@ def main():
     contaminantLogDir = workdir + '/logs/removeControl'
     trimLogDir = workdir + '/logs/trimmomatic'
     cleanDir = workdir + '/cleaned'
+    trimDir = workdir + '/trimmed'
     rRNADir = workdir + '/logs/rRNA_qc'
 
     statJsonFile = workdir + '/raw/Stats/Stats.json'
@@ -185,18 +182,6 @@ def main():
 
     samples = [os.path.basename(x) for x in glob.glob(trimLogDir + '/*.log')]
     samples = [x.replace(".log","") for x in samples]
-
-
-    orderSmp = [" " for x in samples]
-    if os.path.exists(statJsonFile):
-        #sort sample by S\d number
-        for sample in samples:
-            m = re.match("\S+_S(\d+)$",sample)
-            if m:
-                sNum = int(m.groups()[0]) - 1
-                orderSmp[sNum] = sample
-    else:
-        orderSmp = samples
 
     header="Sample\tRawReads\tRawYield(Mbases)\tPercent>=Q30Bases\tRawMeanQualityScore\tRibosomalRNA\tReadsAfterRemoveDuplicates\tControlReads\tReadsAfterTrim\tPossiblePathogenReads"
 
@@ -208,21 +193,24 @@ def main():
         qualDict = parseJson(statJsonFile)
     else:
         qualDict = sumQual(rawDir, input_format, strand1, strand2)
-        
-    for sample in orderSmp:
+    #print(qualDict)
+   
+    for sample in samples:
         rmFile = removeLogDir + "/" + sample + ".log"
         ctFile = contaminantLogDir + "/" + sample + ".log"
         tmFile = trimLogDir + "/" + sample + ".log"
+        trimFile = trimDir + "/" + sample + ".trimmed.fastq.gz"
         clFile = cleanDir + "/" + sample + ".pathogen.fastq.gz"
         rnaFile = rRNADir + "/" + sample + ".log"
         paired = False
-        if not os.path.exists(clFile):
-            clFile = cleanDir + "/" + sample + "_R2.pathogen.fastq.gz"
-            if os.path.exists(clFile):
+        if not os.path.exists(trimFile):
+            trimFile = trimDir + "/" + sample + "_R2.trimmed.fastq.gz"
+            if os.path.exists(trimFile):
                 paired = True
-        #print(clFile)
+        #print(trimFile)
         #get rRNA %
         #bbduk reports total reads (2 * read pairs for paired-end reads)
+        #print(rnaFile)
         cmd = "grep 'Total Removed:' " + rnaFile + " | awk '{gsub(/[()]/,\"\");print $5}' "
         rrna = subprocess.check_output(cmd, shell=True)
         rrna = rrna.decode("utf-8").strip()
@@ -261,12 +249,14 @@ def main():
 
         #count read number from fastq.gz file
         #for paired-end, 2*read#
-        cmd = "zcat " + clFile + " | wc -l"
-        clean = subprocess.check_output(cmd, shell=True)
-        clean = int(clean.decode("utf-8").strip())/4
-        if paired:
-            clean = str(int(clean) * 2)
-
+        if os.path.exists(clFile):
+            cmd = "zcat " + clFile + " | wc -l"
+            clean = subprocess.check_output(cmd, shell=True)
+            clean = int(clean.decode("utf-8").strip())/4
+            if paired:
+                clean = str(int(clean) * 2)
+        else:
+            clean = 0
         percentDup = "{:.2f}".format(float(dup)/float(raw)*100)
         percentTrim = "{:.2f}".format(float(trim)/float(raw)*100)
         percentClean = "{:.2f}".format(float(clean)/float(raw)*100)
@@ -285,8 +275,12 @@ def main():
                 print(smp, " missed!") 
                 fout.write("NA\tNA\tNA\tNA")
         else:
-            fout.write(sample + "\t")
-            fout.write('\t'.join(qualDict[sample]))
+            try:
+                fout.write(sample + "\t")
+                fout.write('\t'.join(qualDict[sample]))
+            except KeyError:
+                print(sample, " missed!") 
+                fout.write("NA\tNA\tNA\tNA")                
         fout.write("\t" + rrna + "\t" + dup + " (" + percentDup + "%)" + "\t" + ctm + "\t" + str(trim) + " (" + percentTrim + "%)" + "\t" + str(int(clean)) + " (" + percentClean + "%)" + "\n") #  
     fout.close()  
 

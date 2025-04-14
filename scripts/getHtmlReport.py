@@ -294,7 +294,8 @@ samples = df['Sample'].copy()
 for sample in samples:
     fromName = workdir + '/qc/quast/' + sample + '.quast/report.html'
     toName = htmlDir + '/' + sample + '.quast.html'
-    shutil.copy(fromName, toName)
+    if os.path.exists(fromName):
+        shutil.copy(fromName, toName)
 
 #4. clean read QC from multiQC
 cleanqcFile = workdir + '/qc/multiqc/trimmed_multiqc_data/multiqc_fastqc.txt'
@@ -308,16 +309,24 @@ cleanQCsample = df['Sample'].copy()
 #put single quast togther
 
 quastFile = workdir + '/qc/quast/' + samples[0] + '.quast/transposed_report.tsv'
-df = pd.read_csv(quastFile, sep='\t', header = 0)
-df.loc[0,'Assembly'] = samples[0]
-for sample in samples[1:]:
-    quastFile = workdir + '/qc/quast/' + sample + '.quast/transposed_report.tsv'
-    df1 = pd.read_csv(quastFile, sep='\t', header=0)
-    df1.loc[0,'Assembly'] = sample
-    df = df.append(df1, sort = False)
-df3 = df.iloc[:,[0,1,2,13,14,15,16,17,18,19,20,21]] 
-assemblyQC = df3.to_html(index=False).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
+if os.path.exists(quastFile):
+    df = pd.read_csv(quastFile, sep='\t', header = 0)
+    df.loc[0,'Assembly'] = samples[0]
+    for sample in samples[1:]:
+        quastFile = workdir + '/qc/quast/' + sample + '.quast/transposed_report.tsv'
+        if os.path.exists(quastFile):
+            df1 = pd.read_csv(quastFile, sep='\t', header=0)
+            df1.loc[0,'Assembly'] = sample
+            try:
+                df = df.append(df1, sort = False)
+            except AttributeError:    #for Pandas >=v2.0
+                df = df._append(df1, sort = False) # Stack the DataFrames on top of each other
 
+    df3 = df.iloc[:,[0,1,2,13,14,15,16,17,18,19,20,21]] 
+    assemblyQC = df3.to_html(index=False).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
+else:
+    assemblyQC = ""
+    
 #6. Kraken2 report
 kReport = []
 for sample in samples:
@@ -354,7 +363,7 @@ bsamples = []
 for sample in samples:
     blastnFile = workdir + '/annotation/' + sample + '.blastn.txt'
     # check if size of file is 0
-    if os.stat(blastnFile).st_size > 0:
+    if os.path.exists(blastnFile) and os.stat(blastnFile).st_size > 0:
         blastnFiles.append(blastnFile)
         bsamples.append(sample)
 #add blastn result        
@@ -382,7 +391,7 @@ bsamples = []
 for sample in samples:
     blastxFile = workdir + '/annotation/' + sample + '.blastx.txt'
     # check if size of file is 0
-    if os.stat(blastxFile).st_size > 0:
+    if os.path.exists(blastxFile) and os.stat(blastxFile).st_size > 0:
         blastxFiles.append(blastxFile)
         bsamples.append(sample)
 #add blastn result        
@@ -404,20 +413,27 @@ if len(blastxFiles) > 0:
 
 #10. Selected contigs
 selectFile = workdir + '/annotation/' + samples[0] + '.selectedRef.txt'
-df = pd.read_csv(selectFile, sep='\t', header = 0)
-df.insert(loc=0, column='Sample', value=samples[0])  #add sample name at column one
+df = pd.DataFrame()
+if os.path.exists(selectFile) and os.stat(selectFile).st_size > 0:
+    df = pd.read_csv(selectFile, sep='\t', header = 0)
+    df.insert(loc=0, column='Sample', value=samples[0])  #add sample name at column one
 for sample in samples[1:]:
     selectFile = workdir + '/annotation/' + sample + '.selectedRef.txt'
-    df1 = pd.read_csv(selectFile, sep='\t', header = 0)
-    df1.insert(loc=0, column='Sample', value=sample)  #add sample name at column one
-    df = pd.concat([df, df1], axis=0) # Stack the DataFrames on top of each other
+    if os.path.exists(selectFile) and os.stat(selectFile).st_size > 0:
+        df1 = pd.read_csv(selectFile, sep='\t', header = 0)
+        df1.insert(loc=0, column='Sample', value=sample)  #add sample name at column one
+        if not df1.empty:
+            df = pd.concat([df, df1], axis=0) # Stack the DataFrames on top of each other
 
 #calculate genome/reference coverage
-coverage = df.iloc[:,4]/df.iloc[:,6] 
-df8 = df.iloc[:,[0,1,3,5,6,11,13,15,17]].copy()
-df8['E-value'] = df8['E-value'].map('{:,.2e}'.format)  #format scitific 
-df8.insert(loc=5, column='RefCoverage', value=coverage)  #add sample name at column one
-selectContig = df8.to_html(index=False).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
+if not df.empty:
+    coverage = df.iloc[:,4]/df.iloc[:,6] 
+    df8 = df.iloc[:,[0,1,3,5,6,11,13,15,17]].copy()
+    df8['E-value'] = df8['E-value'].map('{:,.2e}'.format)  #format scitific 
+    df8.insert(loc=5, column='RefCoverage', value=coverage)  #add sample name at column one
+    selectContig = df8.to_html(index=False).replace('<table border="1" class="dataframe">','<table class="table table-striped" data-name="mytable">') # use bootstrap styling
+else:
+    selectContig = "No selected contigs"
 
 #11. mapping reads to reference information
 df = pd.read_csv(rptFile, sep='\t', header = 0, index_col=False, na_filter = False)
@@ -518,19 +534,25 @@ blastntReport = ""
 blastnrReport = ""
 count=0
 for sample in samples:
-    quastQC += "<a href=\"html/" + sample + ".quast.html\">" + sample + "   </a> &emsp;&emsp;" 
     krakenReport += "<a href=\"html/" + sample + ".kraken2.report.html\">" + sample + "   </a> &emsp;&emsp;"
     kaijuReport += "<a href=\"html/" + sample + ".kaiju_krona.html\">" + sample + "   </a> &emsp;&emsp;"
-    blastnReport += "<a href=\"html/" + sample + ".blastn.krona.html\">" + sample + "   </a> &emsp;&emsp;"
-    blastxReport += "<a href=\"html/" + sample + ".blastx.krona.html\">" + sample + "   </a> &emsp;&emsp;"
+    
+    quastFile = rptdir + '/html/' + sample + '.quast.html'
+    if os.path.exists(quastFile) and os.path.getsize(quastFile) > 0: 
+        quastQC += "<a href=\"html/" + sample + ".quast.html\">" + sample + "   </a> &emsp;&emsp;" 
+
+    blastnFile = rptdir + '/html/' + sample + '.blastn.krona.html'
+    blastxFile = rptdir + '/html/' + sample + '.blastx.krona.html'    
+    if os.path.exists(blastnFile) and os.path.getsize(blastnFile) > 0:    
+        blastnReport += "<a href=\"html/" + sample + ".blastn.krona.html\">" + sample + "   </a> &emsp;&emsp;"
+    if os.path.exists(blastxFile) and os.path.getsize(blastxFile) > 0:
+        blastxReport += "<a href=\"html/" + sample + ".blastx.krona.html\">" + sample + "   </a> &emsp;&emsp;"
 
     blastntFile = rptdir + '/html/' + sample + '.blastnt.krona.html'
     blastnrFile = rptdir + '/html/' + sample + '.blastnr.krona.html'
-
-    if os.path.exists(blastntFile):
+    if os.path.exists(blastntFile) and os.path.getsize(blastntFile) > 0:
         blastntReport += "<a href=\"html/" + sample + ".blastnt.krona.html\">" + sample + "   </a> &emsp;&emsp;"
-    
-    if os.path.exists(blastnrFile):
+    if os.path.exists(blastnrFile) and os.path.getsize(blastnrFile) > 0:
         blastnrReport += "<a href=\"html/" + sample + ".blastnr.krona.html\">" + sample + "   </a> &emsp;&emsp;"
 
     count += 1

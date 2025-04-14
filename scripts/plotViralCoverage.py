@@ -44,12 +44,12 @@ def plot_pileup_coverage(tabFile, graphFile):
     median_dep = np.median(depth)
 
     #plt.plot(position, depth, 'bo', markersize=1)
-    plt.stackplot(position,depth,colors='lightblue',edgecolor='black')
+    plt.stackplot(position,depth,colors='cyan',edgecolor='black')
     plt.xlabel('Position in Genome ' + refName)
     plt.ylabel('Depth of Coverage')
     plt.ylim(min_dep+0.5, max_dep*1.10)
     #add mean value
-    plt.axhline(median_dep, color='r', alpha=0.5, linestyle='--', linewidth=1)
+    plt.axhline(median_dep, color='red', alpha=0.5, linestyle='--', linewidth=1)
     plt.legend(('median: {:5.0f}'.format(median_dep),'depth'),loc='upper right')
     plt.title(title)
     #plt.show()
