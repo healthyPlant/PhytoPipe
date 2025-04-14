@@ -1,0 +1,108 @@
+#Sankemake setting file
+
+#For single-end file
+seq_type: 'se'  #'se' for single-end, 'pe' for paired-end  
+strand1: ''  #'' for single-end file name without R1, 'R1' for single-end file name end with R1 or R1_001
+strand2: 'R2'  # keep it even no paired R2 file
+
+#For paired-end file
+#seq_type: 'pe'  #'se' for single-end, 'pe' for paired-end  
+#strand1: 'R1'  # for pair-end file name with R1 and R2 or R1_001 and R2_001
+#strand2: 'R2'  
+
+input_format: 'fastq.gz'  #read file format. 'fq.gz' is an option 
+number_of_threads: 16 #number of computer cores or threads
+
+#please check wiki to see how to build the databases
+#please do not change these database paths if you're using Docker. /opt/phytopipe/db is the database paths in the docker image
+#spike-in or contorl's sequence file 
+control: /opt/phytopipe/db/phi-X174.fasta
+#kraken2 database folder
+krakenDb: /opt/phytopipe/db/kraken_db
+#kaiju database file
+kaijuDb: /opt/phytopipe/db/kaiju_db/kaiju_db_nr_euk.fmi
+#NCBI blastn nt database downloaded from NCBI
+blastnDb: /opt/phytopipe/db/ncbi_nt/nt
+#NCBI nr database made by Diamond
+blastxDb: /opt/phytopipe/db/ncbi/nr.dmnd
+#viral reference database
+blastnViralDb: /opt/phytopipe/db/ncbi/refseq_viral_genomic.fa
+#blastnViralDb:/ppq/data2/resources/ncbi/plantvirus.fa
+#viral reference taxonomy onformation
+blastnViralTaxonDb: /opt/phytopipe/db/ncbi/taxonomy/refseq_viral.gb_taxon.txt
+#blastnViralTaxonDb: /ppq/data2/resources/ncbi/taxonomy/plantvirus.gb_taxon.txt
+#RVDB viral protein database made by Diamond
+blastxViralDb: /opt/phytopipe/db/ncbi/rvdb.dmnd
+#RVDB viral protein sequences taxonomy information
+blastxViralTaxonDb: /opt/phytopipe/db/ncbi/taxonomy/rvdb.gb_taxon.txt
+#SILVA 18S and 28S Eukaryote ribosomal RNA database
+euk_rRNA: /opt/phytopipe/db/rRNA/silva-euk_combined_rRNA.fasta
+#NCBI taxonomy database
+taxDb: /opt/phytopipe/db/ncbi/taxonomy
+
+#Virus acronym from ICTV
+acronymDb: /opt/phytopipe/db/ICTV_virus_acronym.txt
+
+#microbial taxon ids
+microbialTaxon: /opt/phytopipe/db/ncbi/microbial.tids
+
+#your monitored pathogens, if you don't have them, leave the file empty
+#the file is a tab delimited
+#column titles are:TaxonId Species
+#each line have a specices taxonomy ID and name
+monitorPathogen: /opt/phytopipe/db/monitorPathogen.txt
+
+#Blast databases
+#'virus' is for blasting against RVDB and viral references.
+#'all' is for blasting NCBI nt and nr. It could take a long time to finish blastn
+blastDbType: virus # or 'all' 
+#Blast E-value cutoff 
+blastEvalue: 1e-10
+
+#reads used for assembly or mapping to a reference
+#'trimmed' is for all trimmed reads including host reads
+#'clean' is for all possible pathogen reads. host reads are supposed to be removed
+mapReadType: 'clean' #'trimmed'
+
+#trimmomatic, its adapters and parameters
+trimmomatic: /opt/Trimmomatic-0.39/trimmomatic-0.39.jar
+adapters: /opt/Trimmomatic-0.39/adapters/TruSeq3-SE.fa
+trimmomatic_param: " LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:36 "
+
+#de novo genome assembly tool
+#'Trinity' or 'Spades'
+assembler: Trinity # 'Spades'
+#Spades parameters. Different kmers (k) may generate different results. 
+spades_param: " --only-assembler --phred-offset 33 -k 21,51,71,91 "
+
+
+#mapping tool
+#'bwa' or 'bowtie'
+mappingTool: bwa # 'bowtie2'
+#mapping tool parameters
+bwa_param: " -B 4 "  #default bwa setting #" -k 12 -A 1 -B 3 -O 1 -E 1 " #bwa loose mapping; 
+bowtie2_param: " --very-sensitive-local -k 100 --score-min L,20,1.0 " #bowtie2 sensitive mapping; " --mp 20  --score-min L,-0.1,-0.1 " #bowtie2 very stringent mapping
+
+#clumpify parameters
+clumpify_param: "dedupe=t subs=0 passes=2 " #dupedist=40 optical=t # These parameters identify reads as duplicated only if they are an exact match (i.e., no substitution allowed).
+
+#gobal variables, please do not change
+#they can be changed in the command line
+fastqDir: ""
+flowCellDir: ""
+workDir: ""
+samples: ""
+
+run_info:
+  raw: raw                                #raw fastq file directoy
+  log: logs                               #log files diretory
+  qc: qc                                  #fastqc and multiqc directory
+  trim: trimmed                           #trimmed directory
+  clean: cleaned                          #clean reads after host, control ex. Phx174, duplicates removal
+  assemble: assembly                      #assemble directory
+  classify: classification                #read classification directory
+  annotate: annotation                    #blast annotation directory  
+  map: mapping                            #mapping reads directory   
+  report: report                          #report directory    
+  novel: novelVirus                       #novelVirus directory    
+  
