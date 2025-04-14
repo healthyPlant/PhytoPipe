@@ -8,22 +8,45 @@ transcript
 Saccharomyces
 #filter environmental virus in Taxonomy
 cellular organisms; Eukaryota; Viridiplantae;
-Blacklegged tick associated ilarvirus
-Bremia lactucae associated ourmia-like virus
-Coniothyrium diplodiella negative-stranded RNA virus
+Blacklegged tick
+Bremia lactucae
+Coniothyrium
 Erysiphales
-Erysiphe necator
-Plasmopara viticola lesion associated
+Erysiphe
+Plasmopara
+Ophiocordyceps
+Phomopsis
+Sclerotinia
 Tetranychus urticae-associated 
 Bundaberg bee virus
 Weivirus-like virus
 dicistro-like virus
 dicistrovirus
 Narnaviridae
+Botourmiaviridae
+tick virus
+Nigrospora
+Bemisia tabaci
 flea-associated
 Podosphaera
-Puccinia striiformis
-Penicillium sumatrense
+Puccinia
+Penicillium 
+Colletotrichum
+Cladosporium
+Neofusicoccum
+Alternaria
+Botrytis cinerea
+wasp-associated
+Neuropteran
+picorna-like virus
+Magoulivirus
+Nodaviridae
+Broome virga-like virus
+tori-like
+Soybean leaf-associated
+Soybean-associated double-stranded RNA virus 1
+XiangYun narna-levi-like virus
+Aphid
 #filter viral reference
 DQ318792
 DQ318793
@@ -42,3 +65,7 @@ MT815905
 MZ463757
 OR024670
 LC758579
+LC758578
+MZ463749
+PP915780
+PP869624
