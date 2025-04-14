@@ -52,6 +52,9 @@ microbialTaxon: /opt/phytopipe/db/ncbi/microbial.tids
 #each line have a specices taxonomy ID and name
 monitorPathogen: /opt/phytopipe/db/monitorPathogen.txt
 
+#key words for filtering result, like ribosomal, chromosome, chloroplast, mitochondria
+filterKeys: /opt/phytopipe/db/filterKeyWords.txt
+
 #Blast databases
 #'virus' is for blasting against RVDB and viral references.
 #'all' is for blasting NCBI nt and nr. It could take a long time to finish blastn
@@ -73,7 +76,12 @@ trimmomatic_param: " LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:36 "
 #'Trinity' or 'Spades'
 assembler: Trinity # 'Spades'
 #Spades parameters. Different kmers (k) may generate different results. 
-spades_param: " --only-assembler --phred-offset 33 -k 21,51,71,91 "
+spades_param: " " #" --only-assembler --phred-offset 33 -k 21,31,41,51,71,91,121 "
+
+#to limit blastn (>=v2.15) search in interesting taxons, such as: 2 (bacteria), 10239 (viruses), 4751 (fungi), 4762 (oomycetes)
+includeTaxids: "2,10239,4751,4762"
+#to exclude unwanted taxons in blastn search (>=v2.15), such as 38018 (bacteriophage),  32630 (synthetic construct), 451344 (unclassified archaeal viruses), 12333 (unclassified bacterial viruses), 552364 (unclassified virophages), 186616 (environmental samples)
+excludeTaxids: "38018,32630,451344,12333,552364,186616"
 
 
 #mapping tool
