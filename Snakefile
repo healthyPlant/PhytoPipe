@@ -4,8 +4,10 @@
 __author__ = 'Xiaojun Hu <xiaojun.hu@usda.gov>'
 
 import os,subprocess,itertools,glob,re,sys
-import datetime
+import datetime, time
 from snakemake.utils import report
+
+start = time.time()
 
 #SETUP PROCESS-RELATED CONFIGURATION 
 try:
@@ -13,9 +15,8 @@ try:
 except:
 	CONFIGFILE = str(workflow.overwrite_configfile[0])
 
-#config["workDir"] = os.getcwd()
 #setup workdir dynamically
-#rules will then be expressed relative to the workdir:
+#rules will then be expressed relative to the workdir
 workdir: config["workDir"]  #can be changed at the snakemake command line
 fastqDir = config["fastqDir"]  #can be changed at the snakemake command line
 flowCellDir = config["flowCellDir"]  #can be changed at the snakemake command line
@@ -24,20 +25,17 @@ flowCellDir = config["flowCellDir"]  #can be changed at the snakemake command li
 SNAKEFILE = workflow.snakefile
 SNAKEFILE_DIR = os.path.dirname(SNAKEFILE)
 CORES = workflow.cores #note workflow.cores work only on version 5.11.2 above
-#print(CORES)
 config["number_of_threads"] = CORES  #change threads number by command paramter --cores/-j 16
 config["snakefile"] = SNAKEFILE
 config["snakefile_dir"] = SNAKEFILE_DIR
-#print(SNAKEFILE)
 
 #print(workflow.__dict__) #print all attributes
 #Establish snakefile and environment dictionaries
 snakefiles_dir = os.path.abspath(os.path.join(SNAKEFILE_DIR, "rules"))		#directory for additional snakefiles
-#environments_dir = os.path.abspath(os.path.join(SNAKEFILE_DIR, "envs"))	#directory for conda environment yaml files
+environments_dir = os.path.abspath(os.path.join(SNAKEFILE_DIR, "envs"))	#directory for conda environment yaml files
 scripts_dir = os.path.abspath(os.path.join(SNAKEFILE_DIR, "scripts")) 			#directory for extra scripts used in workflow
 
 #running folders
-seq_type = config["seq_type"] 
 rawReadDir = config["workDir"] + "/" + config["run_info"]["raw"]
 qcDir = config["workDir"] + "/" + config["run_info"]["qc"]
 logDir = config["workDir"] + "/" + config["run_info"]["log"]
@@ -48,27 +46,22 @@ annotateDir = config["workDir"] + "/" + config["run_info"]["annotate"]
 mapDir = config["workDir"] + "/" + config["run_info"]["map"]
 reportDir = config["workDir"] + "/" + config["run_info"]["report"]
 novelDir = config["workDir"] + "/" + config["run_info"]["novel"]
-cleanDir = config["workDir"] + "/" + config["run_info"]["clean"]
 blastDbType = config["blastDbType"]
+seq_type = config["seq_type"]
 reportFile = reportDir + "/report.txt" 
 htmlReport = reportFile.replace(".txt", ".html")
-
-if os.path.isfile(reportFile):
-	os.remove(reportFile)
+strand1 = config["strand1"]
+strand2 = config["strand2"]
+STRANDS = [config["strand1"], config["strand2"]]
 
 ## Check whether input fastq files are compressed or not
 if  "input_format" in config.keys():
-	input_format = config["input_format"]
+    input_format = config["input_format"]
 else:
-	input_format = "fastq.gz"
+    input_format = "fastq.gz"
 
-#Run bcl2fastq
-#bclOption = " --barcode-mismatches 0 --no-lane-splitting "  #for one index  
-bclOption = " --barcode-mismatches 1 --no-lane-splitting "  #for dual index 
-
-#setup soft link or copy fastq files to rawReadDir
+#set up soft link for fastq files if fastq folder is surpplied
 if fastqDir:
-	#set up soft link for fastq files if fastq folder is surpplied
 	if not os.path.exists(rawReadDir):
 		os.system("ln -sf " + fastqDir + " " + rawReadDir)
 	# Check if given path is link
@@ -78,45 +71,33 @@ if fastqDir:
 		# soft link broken, copy files
 		if not os.path.isdir(rawReadDir): #check a folder exists
 			os.mkdir(rawReadDir) #make a folder
-		os.system("cp " + fastqDir + "/*." + input_format + " " + rawReadDir + "/")  
-
-elif flowCellDir and len(os.listdir(flowCellDir)) != 0 :
-	print("Runing bcl2fastq")
-	if not os.path.isdir(rawReadDir): #check a folder exists
-		os.mkdir(rawReadDir) #make a folder
-	os.system("bcl2fastq -R " + flowCellDir + " -o " + rawReadDir + bclOption + ">> " + rawReadDir + "/bcl2fastq.log 2>&1")
-	#--sample-sheet SampleSheet.csv
-
+		print("cp " + fastqDir + "/*." + input_format + " " + rawReadDir + "/")  
+			
 if not os.listdir(rawReadDir): 
-	print(rawReadDir + " is empty. Exit!") 
-	sys.exit()
+    print(rawReadDir + " is empty. Exit!") 
+    sys.exit()
 
 #get sample names from rawReadDir
-#print(config['workdir'])
-#print(os.path.basename(config['run_info']['raw_fastq']))
-#SAMPLES, = glob_wildcards(rawReadDir + "/{sample}_R1_001.fastq.gz")
 SAMPLES = [os.path.basename(x) for x in glob.glob(rawReadDir + '/*.' +  input_format)]
 #remove 'Undetermined_*'
 SAMPLES = [x for x in SAMPLES if not x.startswith('Undetermined_')]
-#print(SAMPLES)
+
 #remove '_R1_001.fastq.gz'
 SAMPLES = [x.replace("." + input_format,"") for x in SAMPLES]
-if config["strand1"] != '':
-	SAMPLES = [re.sub(r"(.*)_%s.*" % config["strand1"], "\\1", x) for x in SAMPLES]
+if seq_type == 'se' and config["strand1"] != '':
+	SAMPLES = [re.sub(r"(.*)_%s" % config["strand1"], "\\1", x) for x in SAMPLES]
 
 if seq_type == 'pe':
-	SAMPLES = [re.sub(r"(.*)_%s.*" % config["strand2"], "\\1", x) for x in SAMPLES]
-SAMPLES = list(set(SAMPLES))  #remove duplicated from a list using set
+	SAMPLES = [re.sub(rf"_[{strand1}|{strand2}]$", "", x) for x in SAMPLES]
 
+SAMPLES = list(set(SAMPLES))  #remove duplicated from a list using set
 print("Samples: %s"  % ", ".join(SAMPLES))
 config["samples"] = SAMPLES  #save sample names in a global viriable
-#print("config samples: ", config['samples'])
-STRANDS = [config["strand1"], config["strand2"]]
-strand2 = config["strand2"]
+
 if len(SAMPLES) == 0:
 	sys.exit("No sample files found. Exit!")
 
-# load rules 
+#Run rules
 include: os.path.join(snakefiles_dir, "cleanReads.smk")
 include: os.path.join(snakefiles_dir, "classifyReads.smk")
 include: os.path.join(snakefiles_dir, "assemble.smk")
@@ -124,114 +105,89 @@ include: os.path.join(snakefiles_dir, "annotate.smk")
 include: os.path.join(snakefiles_dir, "mappingReads.smk")
 include: os.path.join(snakefiles_dir, "makeReport.smk")
 
-# Single-end
-if (seq_type == "se"):
-	#QC raw reads
-	rawFastQC = expand(qcDir + "/raw_fastqc/{sample}_fastqc.zip", sample=SAMPLES)
-	#check host ribosomal RNA
-	rRNACheck = expand(trimDir + "/{sample}.filtRNA.fastq.gz", sample=SAMPLES)
-	#remove duplicate reads
-	rmDup = expand(trimDir + "/{sample}.rmdup.fastq.gz", sample=SAMPLES) #run clumpify to remove duplicate reads
-	#remove PhiX174 contaminant
-	rmCtm = expand(trimDir + "/{sample}.rmdup_ctm.fastq.gz", sample=SAMPLES) #run clumpify to remove duplicate reads
-	#Trim reads
-	trim = expand(trimDir + "/{sample}.trimmed.fastq.gz", sample=SAMPLES), #run trimmomatic 
-	#QC trimmed reads
-	trimmedFastQC = expand(qcDir + "/trimmed_fastqc/{sample}.trimmed_fastqc.zip",sample=SAMPLES), #run fastqc for trimmed reads
-	#extract pathogen reads
-	extractPathRead = expand(cleanDir + "/{sample}.pathogen.fastq.gz", sample=SAMPLES),
+#the following two functions: gather_samples and gather_blast_input for handling assembly failed samples
+#If no contigs, the downstream rules will not be executed for the sample
+def gather_samples(wildcards):
+	"""
+	Aggregate samples having a successful assembly based on checkpoint extract_contig in annotate.smk
+	"""
+	samples = []
+	for sample in SAMPLES:
+		fn = checkpoints.extract_contig.get(sample=sample).output[0]
+		if os.path.exists(fn) and os.stat(fn).st_size > 0:
+			samples.append(sample)
+	return samples
 
-# Paired-ends
-elif (seq_type == "pe"):
-	#QC raw reads
-	rawFastQC = expand(qcDir + "/raw_fastqc/{sample}_{strand}_fastqc.zip", sample=SAMPLES, strand=STRANDS),
-	#check host ribosomal RNA
-	rRNACheck = expand(trimDir + "/{sample}_R2.filtRNA.fastq.gz", sample=SAMPLES),
-	#remove duplicate reads	
-	rmDup = expand(trimDir + "/{sample}_R2.rmdup.fastq.gz",sample=SAMPLES), #strand=STRANDS)
-	#remove PhiX174 contaminant
-	rmCtm = expand(trimDir + "/{sample}_R2.rmdup_ctm.fastq.gz", sample=SAMPLES) #, strand=STRANDS), #run clumpify to remove duplicate reads
-	#Trim reads
-	trim = expand(trimDir + "/{sample}_R2.trimmed.fastq.gz", sample=SAMPLES) #, strand=STRANDS), #run trimmomatic 
-	#QC trimmed reads
-	trimmedFastQC = expand(qcDir + "/trimmed_fastqc/{sample}_{strand}.trimmed_fastqc.zip", sample=SAMPLES, strand=['R1','R2']), #STRANDS), #run fastqc for trimmed reads
-	#extract pathogen reads
-	extractPathRead = expand(cleanDir + "/{sample}_R2.pathogen.fastq.gz", sample=SAMPLES), #strand=STRANDS),
+def gather_blast_input(wildcards):
+	"""
+	Aggregate samples for blast 
+	"""
+	samples = gather_samples(wildcards)
+	if len(samples) == 0:
+		sys.exit("No samples are sucessfully assembled. Exit!")
+	else:
+		print("Sucessfully assembled samples: ", samples)
 
-else:
-	sys.exit("Error: invalid 'seq_type parameter'. Must be 'se' or 'pe'")
+	#Give the user options to blast against only viral sequences or all NCBI nt and nr databases
+	runBlast = list()
+	#Run Blastn againt NCBI viral ref
+	viralblastn = expand(annotateDir + "/{sample}.blastn.txt", sample=samples)
+	#Run Diamond/Blastx againt RVDB
+	viralblastx = expand(annotateDir + "/{sample}.blastx.txt", sample=samples)
+	runBlast.append(viralblastn)
+	runBlast.append(viralblastx)
+	if (blastDbType == "all"):
+		#Run Blastn againt NCBI nt
+		allBlastnt = expand(annotateDir + "/{sample}.blastnt.krona.html", sample=samples)
+		#Run Diamond/Blastx againt NCBI nr
+		allBlastnr = expand(annotateDir + "/{sample}.blastnr.krona.html", sample=samples)
+		runBlast.append(allBlastnt)
+		runBlast.append(allBlastnr)
 
-#Give the user options to blast against only viral sequences or all NCBI nt and nr databases
-runBlast = list()
-#Run Blastn againt NCBI viral ref
-viralblastn=expand(annotateDir + "/{sample}.blastn.txt", sample=SAMPLES)
-#Run Diamond/Blastx againt RVDB
-viralblastx=expand(annotateDir + "/{sample}.blastx.txt", sample=SAMPLES)
-runBlast.append(viralblastn)
-runBlast.append(viralblastx)
-if (blastDbType == "all"):
-	#Run Blastn againt NCBI nt
-	allBlastnt = expand(annotateDir + "/{sample}.blastnt.txt", sample=SAMPLES)
-	#Run Diamond/Blastx againt NCBI nr
-	allBlastnr = expand(annotateDir + "/{sample}.blastnr.txt", sample=SAMPLES)
-	runBlast.append(allBlastnt)
-	runBlast.append(allBlastnr)
+	return runBlast
 
+# a target rule to define the desired final output
 rule all:
 	input: #targets
-		#QC raw reads
-		rawFastQC,
-
-		#remove host ribosomal RNAs
-		rRNACheck,
-
-		#remove duplicate reads
-		rmDup,
-		
-		#remove PhiX174 contaminant
-		rmCtm,
-		
-		#Trim reads
-		trim,
-		
-		#QC trimmed reads
-		trimmedFastQC,
-
-		#summary fastqc by multiqc
-		qcDir + "/multiqc/raw_multiqc.html", #run multiqc for raw reads fastqc
-		qcDir + "/multiqc/trimmed_multiqc.html", #run multiqc for trimmed reads fastqc
-
-		#kraken-krona
-		expand(classifyDir + "/{sample}.kraken2.report.html", sample=SAMPLES),
-		#extract pathogen reads
-		extractPathRead,
-		
-		#Kaiju-krona
-		expand(classifyDir + "/{sample}.kaiju.table.txt", sample=SAMPLES),
-		expand(classifyDir + "/{sample}.kaiju_krona.html", sample=SAMPLES),
-
-		#assemble pathogen reads
-		expand(assembleDir + "/{sample}/contigs.fasta", sample=SAMPLES),
-		expand(qcDir + "/quast/{sample}.quast", sample=SAMPLES),
-		#quast multiqc
-		qcDir + "/multiqc/quast_multiqc.html", #run multiqc for quast
-
-		#annotate contigs using blastn and blastx
-		runBlast,
-		#reteive references 
-		expand(annotateDir + "/{sample}.refNamen.txt", sample=SAMPLES),
-		
-		#mapping reads to references
-		expand(logDir + "/checkPoint/{sample}.retrieveRef.done", sample=SAMPLES),
-		
-		#mapping reads to contigs, possible novel virus
-		expand(logDir + '/checkPoint/{sample}.map2Contig.done', sample=SAMPLES),
-
-		#blastn consensus against NCBI, if failed, run blastx
-		expand(logDir + "/checkPoint/{sample}.blastn.done", sample=SAMPLES),
-		
-		reportFile,
-		htmlReport
+		htmlReport,
+		unpack(gather_blast_input),
 
 	message: "Rule all"
 	shell: "echo Job done    `date '+%Y-%m-%d %H:%M'`"
+
+# The onsuccess handler is executed if the workflow finished without error.
+onsuccess:
+	#check contigs, if no conitgs, report assembly fail
+	assembleFail = []
+	for sample in SAMPLES:
+		filename = assembleDir + "/" + sample + "/contigs.fasta"
+		if not os.path.exists(filename) or os.stat(filename).st_size == 0:
+			assembleFail.append(sample)
+	failNum = len(assembleFail)
+
+	print("\n############################################################################")
+	if failNum > 0:
+		print("# Aassembly failed sample(s): ", ", ".join(assembleFail))
+	else:
+		print("# PhytoPipe finished without errors ")
+	print("# Plase check the result in the folder " + reportDir)
+	print("############################################################################")
+	print("\nRunning time in minutes: %s\n" % round((time.time() - start)/60,1))
+
+# Else, the onerror handler is executed.
+onerror:
+	print("\n\n#####################\n# An error occurred #\n#####################\n\n")
+	command = "grep -r 'Error:' " + logDir  
+	try:
+		output = subprocess.check_output(command, shell=True, text=True, stderr=subprocess.STDOUT)
+		print(output)
+	except subprocess.CalledProcessError as e:
+		print(f"Error executing command: {e}")
+		print("No errors found in the log files.")
+	print("############################################################################")
+	print("\nRunning time in minutes: %s\n" % round((time.time() - start)/60,1))
+	#shell("mail -s "an error occurred" youremail@provider.com < {log}")
+
+# onstart handler will be executed before the workflow starts. Note that dry-runs do not trigger any of the handlers
+onstart:
+	print("Running PhytoPipe for samples : %s"  % ", ".join(SAMPLES))
