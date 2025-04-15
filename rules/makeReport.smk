@@ -273,7 +273,6 @@ rule generate_htmlReport:
 	message:
 		'''--- Generate the final html report.'''
 	params:
-		sampleInfo = keyExcelFile,
 		filterKey = filterKeyFile,
 		filteredRpt = reportDir + "/report.filtered.txt",
 		pgqpReport = reportDir + "/report.pgqp.txt",
