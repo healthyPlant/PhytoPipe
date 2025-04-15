@@ -219,8 +219,6 @@ rule generate_report:
 		log = logDir + "/report/report.log"
 	message:
 		'''--- Generate the final report.'''
-	params:
-		sampleInfo = keyExcelFile
 	priority: -100
 	shell:
 		"""

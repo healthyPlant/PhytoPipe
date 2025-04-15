@@ -13,7 +13,7 @@ taxDb = config["taxDb"]
 seq_type = config["seq_type"]
 includeTaxids = config["includeTaxids"]
 
-targetTaxids = includeTaxids(",", " ")
+targetTaxids = includeTaxids.replace(",", " ")
 
 if (seq_type == "pe"):
 	paired_string = '--paired'
