@@ -98,7 +98,9 @@ echo "#2. build Kaiju db"
 cd $kaijudb
 echo "kaiju-makedb -t 16 -s nr_euk"
 #echo "kaiju-makedb is running in the background and may take several days."
-kaiju-makedb -t 16 -s nr_euk &
+kaiju-makedb -t 16 -s nr_euk &  #NCBI BLAST nr database containing all proteins belonging to Archaea, bacteria, viruses, fungi and microbial eukaryotes
+#kaiju-makedb -s viruses  #the NCBI viral RefSeq database
+#kaiju-makedb -s rvdb  #Viral Protein sequences from RVDB-prot
 PID_kaiju=$!
 wait $PID_kaiju
 echo "Kaiju database building has finished."
@@ -296,7 +298,7 @@ echo "#*****************************"
 echo "#12. Kraken2 step2: build Kraken2 db with 256Gb size"
 cd $krakendb
 echo "kraken2-build --build --threads 16 --db $krakendb --max-db-size 256000000000"
-kraken2-build --build --threads 16 --db $krakendb --max-db-size 256000000000
+kraken2-build --build --threads 16 --db $krakendb --max-db-size 256000000000  #256000000000 for 256Gb, 128000000000 for 128Gb
 echo "kraken2-build may take several days."
 PID_kraken2=$!
 wait $PID_kraken2
