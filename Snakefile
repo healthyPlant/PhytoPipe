@@ -88,7 +88,7 @@ if seq_type == 'se' and config["strand1"] != '':
 	SAMPLES = [re.sub(r"(.*)_%s" % config["strand1"], "\\1", x) for x in SAMPLES]
 
 if seq_type == 'pe':
-	SAMPLES = [re.sub(rf"_[{strand1}|{strand2}]$", "", x) for x in SAMPLES]
+	SAMPLES = [re.sub(rf"_({strand1}|{strand2})$", "", x) for x in SAMPLES]
 
 SAMPLES = list(set(SAMPLES))  #remove duplicated from a list using set
 print("Samples: %s"  % ", ".join(SAMPLES))
