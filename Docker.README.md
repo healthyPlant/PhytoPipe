@@ -11,25 +11,25 @@ the Docker images that come prepackaged with
 --- | --- | 
 Python3|v3.8.10|
 Java|openjdk 11.0.17 2022-10-18|
-BBtools|v39.01|
-FastQC|v0.11.9|
+BBtools|v39.19|
+FastQC|v0.12.1|
 Trimmomatic|v0.39|
 QUAST|v5.2.0|
 snakemake|v7.18.0|
-SPAdes|v3.13.1|
+SPAdes|v4.1.0|
 multiqc|v1.14|
-Kraken2|v2.0.8-beta|
-Kaiju|v1.9.2|
+Kraken2|v2.1.5|
+Kaiju|v1.10.1|
 MUMmer4|v4.0.0rc1|
-Blast|v2.13.0+|
-Diamond|v0.9.30|
-BWA|v0.7.17-r1188|
-Bowtie2|v2.3.5.1|
-bcftools|v1.16|
-samtools|v1.16.1|
-bedtools|v2.27.1|
-Seqtk|v1.3-r106|
-Trinity|v2.15.0|
+Blast|v2.16.0+|
+Diamond|v2.1.11|
+BWA|0.7.19-r1273|
+Bowtie2|v2.5.4|
+bcftools|v1.21|
+samtools|v1.21|
+bedtools|v2.31.0|
+Seqtk|1.4-r132-dirty|
+Trinity|v2.15.1|
 KronaTools|v2.8.1|
  | | 
 
