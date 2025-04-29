@@ -200,11 +200,11 @@ cd ..
 
 #install recent version Kraken2
 #sudo apt-get -qq -y install kraken2 #download library fail
-wget https://github.com/DerrickWood/kraken2/archive/refs/tags/v2.14.tar.gz
-tar -xvzf v2.14.tar.gz
-cd kraken2-2.14
-./install_kraken2.sh $SRC/kraken2.14
-ln -s $SRC/kraken2.14/kraken2* $BIN/
+wget https://github.com/DerrickWood/kraken2/archive/refs/tags/v2.1.5.tar.gz
+tar -xvzf v2.1.5.tar.gz
+cd kraken2-2.1.5
+./install_kraken2.sh $SRC/kraken2.1.5
+ln -s $SRC/kraken2.1.5/kraken2* $BIN/
 cd ..
 
 #install SPADes
