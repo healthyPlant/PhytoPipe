@@ -1,0 +1,25 @@
+Bioinformatics tools in the PhytoPipe v1 image
+Tool	Version
+Python3	v3.8.10
+Java	openjdk 11.0.17 2022-10-18
+BBtools	v39.01
+FastQC	v0.11.9
+Trimmomatic	v0.39
+QUAST	v5.2.0
+snakemake	v7.18.0
+SPAdes	v3.15.5
+multiqc	v1.14
+Kraken2	v2.1.2
+Kaiju	v1.9.2
+MUMmer4	v4.0.0rc1
+Blast	v2.14.0+
+Diamond	v0.9.30
+BWA	v0.7.17-r1188
+Bowtie2	v2.4.2
+bcftools	v1.16
+samtools	v1.16.1
+bedtools	v2.30.0
+Seqtk	v1.3-r117
+Trinity	v2.15.0
+KronaTools	v2.8.1
+Entrez Direct	v18.9
