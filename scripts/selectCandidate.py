@@ -21,7 +21,7 @@ import os, sys, argparse
 from Bio import SeqIO
 
 kraken_viral_cutoff = 5 #mapped viral reads cut off
-kaiju_cutoff = 100 # use reads number as cutoff instead of percentage 0.05
+kaiju_cutoff = 50 # use reads number as cutoff instead of percentage 0.05
 evalue_cutoff_blastn = 1e-50 #blastn evalue cut off, 1e-30
 evalue_cutoff_blastx = 1e-60 # blastx evalue for reference filter, 1e-40
 identity_cutoff = 80  #blastn identity cutoff
@@ -204,37 +204,56 @@ def selectTop(mpDict, blastnDict, blastxDict, krakenDict, kaijuDict, evalue_cuto
 
     #4. for the virus having several segments, if one fragment passes the threshold, the other fragments should be included, even the contig e-value is higher. The contig with highest bit score one is kept
     refTaxonDict = {}
-    for bid in blastnDict:  
-        for oid in outDict:
-            #if taxon id was selected, and reference was not selected, keep the reference with the higher bitscore
-            selected = outDict[oid].split("\t")
+    for oid in outDict:
+        #get selected ref and taxon in the above steps
+        selected = outDict[oid].split("\t")
+        rtId = selected[1] + "_" + selected[13] #=refId + taxonId
+
+        #find the other references in the same taxon in the blastn 
+        #if taxon id was selected, and reference was not selected, select it
+        #if multiple contigs are available, keep the reference with the higher bitscore
+        for bid in blastnDict:  
             if blastnDict[bid][13] == selected[13]: #taxonId equal
                 if blastnDict[bid][1] != selected[1]: #refId different
-                    rtId = selected[1] + "_" + selected[13] #=refId + taxonId
-                    #refTaxonDict[rtId] = selected  
                     #keep the contig with the higher bitScore [11] 
+                    #print("rtId:", blastnDict[bid][1] + "_" + blastnDict[bid][13])
+                    #update refId + taxonId
+                    rtId = blastnDict[bid][1] + "_" + blastnDict[bid][13] #=refId + taxonId
                     if rtId not in refTaxonDict or float(refTaxonDict[rtId][11]) < float(blastnDict[bid][11]):
                         refTaxonDict[rtId] = blastnDict[bid]
                         #print(blastnDict[bid])
-    #print(outDict.keys())                    
+    #print("refTaxon:", refTaxonDict)
+     
     for rtId in refTaxonDict:
         newid = refTaxonDict[rtId][0] #contig name
         if newid not in outDict:
             outDict[newid] = "\t".join(refTaxonDict[rtId]) + "\tBlastn"
             #print("Virus segments ", newid)
-        
+    #print(outDict.keys())   
+
     #5. if virus is found in both kaiju and blastx
     contigLenDict = {}
     for id in blastxDict:
-       #if matched protein is found, keep it
-       for tid in kaijuDict:
-            #if taxon_id in both kaiju and blastx and blastx evalue < cutoff, keep it
+        tax = blastxDict[id][13]
+        contig_len = int(blastxDict[id][4])
+
+        #if blastx evalue < 1e-200 or contig length >1000bp, selected
+        if id not in outDict and ((int(blastxDict[id][4]) >=1000 and float(blastxDict[id][10]) <= evalue_cutoff_blastx) or float(blastxDict[id][10]) < 1e-200):
+            #print("Blastx ", id, ", taxon:", blastxDict[id][13], ", contig length:", blastxDict[id][4], ", E-value:", blastxDict[id][10])
+            if tax in contigLenDict:
+                if contig_len > contigLenDict[tax][1]: #compare contigs length
+                    contigLenDict[tax] = [id, contig_len]
+            else:
+                contigLenDict[tax] = [id, contig_len]
+
+        for tid in kaijuDict:
+            #if taxon_id in both kaiju and blastx, and blastx evalue < cutoff, keep it
             if tid == blastxDict[id][13] and float(blastxDict[id][10]) <= evalue_cutoff_blastx: #if the same taxon id
-                if id not in outDict and blastxDict[id][13] not in taxonDict and (float(kaijuDict[tid]) >= kaiju_cutoff or float(blastxDict[id][10]) < 1e-200): #if Kaiju reads >=100 or protein e-value < 1e-200:
+                if id not in outDict and blastxDict[id][13] not in taxonDict and float(kaijuDict[tid]) >= kaiju_cutoff:  
                     #print("Kaiju + Blastx ", id, ", taxon:", blastxDict[id][13], ", contig length:", blastxDict[id][4])
                     #for a taxon has many contigs, select the longest contig
-                    tax = blastxDict[id][13]
-                    contig_len = int(blastxDict[id][4])
+                    #tax = blastxDict[id][13]
+                    #contig_len = int(blastxDict[id][4])
                     if tax in contigLenDict:
                         if contig_len > contigLenDict[tax][1]: #compare contigs length
                             contigLenDict[tax] = [id, contig_len]
@@ -361,7 +380,7 @@ def main():
 
     outDict2 = mergeBlast(blastnDict, blastxDict, contig_file)
     #output selected blast result
-    fout2 = open(output_file2, 'w')
+    fout2 = open(output_file2, 'w') 
     fout2.write("Contig_blastx\tReference_blastx\tPercent_identity_blastx\tAlignment_length_blastx\tContig_length_blastx\tReference_length_blastx\tAlign_contig_start_blastx\tAlign_contig_end_blastx\tAlign_ref_start_blastx\tAlign_ref_end_blastx\tE-value_blastx\tBitscore_blastx\tReference_name_blastx\tTaxonomy_id_blastx\tSpecies_blastx\tTaxonomy_path_blastx\t")
     fout2.write("Contig_blastn\tReference_blastn\tPercent_identity_blastn\tAlignment_length_blastn\tContig_length_blastn\tReference_length_blastn\tAlign_contig_start_blastn\tAlign_contig_end_blastn\tAlign_ref_start_blastn\tAlign_ref_end_blastn\tE-value_blastn\tBitscore_blastn\tReference_name_blastn\tTaxonomy_id_blastn\tSpecies_blastn\tTaxonomy_path_blastn\tContig\n") 
     for id in outDict2:
