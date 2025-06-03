@@ -189,7 +189,12 @@ echo "#8. build plant virus blastn db"
 cd $ncbi
 #get virus taxon id
 cut -f1 $pv_taxonFile | sed '/TaxonId/d'> $taxondb/taxIDs
+
 #extract virus sequences from NCBI nt database
+
+#taxonomy4blast.sqlite3 is required by Blast (>v2.13), make a softlink from $nt_db to the work directory
+ln -s $ncbi_nt/taxonomy4blast.sqlite3 ./
+
 blastdbcmd -db $ncbi_nt/nt -dbtype nucl -taxidlist $taxondb/taxIDs -out plantvirus.0.fa
 
 #remove unwanted sequences
