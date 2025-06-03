@@ -1478,8 +1478,7 @@ TaxonId	VirusSpecies
 207240	Luffa yellow mosaic virus
 2017710	Lupine feces-associated gemycircularvirus 2
 3078327	Lupinus gammacytorhabdovirus 1
-573615	"Lupinus mosaic virus; Large-leaved lupine mosaic virus
-Lupine mosaic virus"
+573615	Lupinus mosaic virus; Large-leaved lupine mosaic virus
 2054409	Luteovirus sociomali; apple-associated luteovirus
 3070924	lychee viroid
 2022430	Lychee viroid-like RNA
