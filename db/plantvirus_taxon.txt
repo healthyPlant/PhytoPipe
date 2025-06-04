@@ -1020,7 +1020,7 @@ TaxonId	VirusSpecies
 1980430	Emaravirus toordali; pigeonpea sterility mosaic emaravirus 2
 1980428	Emaravirus tritici; High Plains wheat mosaic virus
 2843908	Emaravirus verbanni
-2020881	Emilia sonchifolia yellow vein Thailand virus
+2560412	Emilia sonchifolia yellow vein Thailand virus
 2844115	Emilia yellow vein betasatellite
 2496574	Emilia yellow vein Fujian betasatellite
 2496575	Emilia yellow vein Fujian virus
