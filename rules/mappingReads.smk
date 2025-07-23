@@ -95,7 +95,7 @@ rule map_ref:
 	log:
 		logDir + "/mapping/{sample}.map2Ref.log"
 	shell:
-		"""
+		r"""
 		if [ ! -d {output.map2Ref} ]; then 
 			mkdir {output.map2Ref}  
 		fi
