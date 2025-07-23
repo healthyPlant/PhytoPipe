@@ -124,7 +124,7 @@ rule run_blastnt:
 		#make soft link for the file taxonomy4blast.sqlite3, which is required for blastn with the parameter -taxids 
 		from=$(dirname {nt})
 		to=`pwd`
-		if [[ -e $from/taxonomy4blast.sqlite3 && ! -e $to/taxonomy4blast.sqlite3 ]]; then
+		if [ -e $from/taxonomy4blast.sqlite3 ] && [ ! -e $to/taxonomy4blast.sqlite3 ]; then
 			ln -s $from/taxonomy4blast.sqlite3 $to/
 		fi
 		if [ -e $to/taxonomy4blast.sqlite3 ]; then
