@@ -4,14 +4,14 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - trinity=2.9.1
-  - blast=2.12.0
-  - diamond=0.9.21
-  - bcftools=1.11
-  - spades=3.13.0
-  - bbmap=38.84
-  - bedtools=2.30.0
-  - kaiju=1.8.0
+  - trinity=2.15.1
+  - blast=2.16.0
+  - diamond=2.1.11
+  - bcftools=1.21
+  - spades=4.1.0
+  - bbmap=39.19
+  - bedtools=2.31.0
+  - kaiju=1.10.1
   - fastqc=0.12.1
   - krona=2.8.1
   - mummer4=4.0.0rc1
@@ -22,8 +22,9 @@ dependencies:
   - pip:
     - snakemake==7.24.0
     - biopython==1.81
-    - multiqc==1.14
+    - multiqc==1.12
     - quast==5.2.0
     - pysam==0.20.0
     - scipy==1.10.1
     - pandas==1.5.3
+    - pulp==2.7.0
