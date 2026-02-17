@@ -16,6 +16,7 @@ rvdb_version=$3 #v25.0 #https://rvdb-prot.pasteur.fr/
 
 ncbi=$mydb/ncbi
 ncbi_nt=$mydb/ncbi_nt
+ncbi_nr=$mydb/ncbi_nr
 krakendb=$mydb/kraken_db
 kaijudb=$mydb/kaiju_db
 taxondb=$mydb/ncbi/taxonomy
@@ -112,11 +113,18 @@ echo "update_blastdb.pl --quiet --passive --decompress --force nt"
 update_blastdb.pl --quiet --passive --decompress --force nt
 echo "NCBI blastn database nt is downloaded."
 
+
 #*****************************************
 echo "#4. update NCBI nr diamond format"
+cd $ncbi_nr
+echo "update_blastdb.pl --quiet --passive --decompress --force nr"
+update_blastdb.pl --quiet --passive --decompress --force nr
+echo "NCBI blastn database nr is downloaded."
+
 cd $ncbi
-echo "wget --no-verbose ftp://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/nr.gz"
-wget --no-verbose ftp://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/nr.gz
+#echo "wget --no-verbose https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/nr.gz"  #use https replace ftp
+#wget --no-verbose https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/nr.gz
+blastdbcmd -db $ncbi_nr/nr -outfmt "%f" | gzip > nr.gz
 echo "diamond makedb --quiet --threads 16 --in nr.gz -d nr"
 diamond makedb --quiet --threads 16 --in nr.gz -d nr
 echo "Diamond NCBI nr database is built."
@@ -162,8 +170,13 @@ fi
 echo "#7. build viral reference blastn db"
 cd $ncbi
 echo "Download NCBI viral references."
-echo "wget --no-verbose -r -nd -np -A '*.genomic.fna.gz' ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral"
-wget --no-verbose -r -nd -np -A '*.genomic.fna.gz' ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral
+#echo "wget --no-verbose -r -nd -np -A '*.genomic.fna.gz' ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral"
+#wget --no-verbose -r -nd -np -A '*.genomic.fna.gz' ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral
+wget --no-verbose  https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.1.genomic.fna.gz
+#curl -s https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/ | grep -oP 'href="\K[^"]+\.genomic\.fna\.gz' | while read file; do
+#  echo "curl -O https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/$file"
+#  curl -O "https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/$file"
+#done
 zcat viral.*.genomic.fna.gz > refseq_viral_genomic.fa
 echo "makeblastdb -in refseq_viral_genomic.fa -dbtype nucl"
 makeblastdb -in refseq_viral_genomic.fa -dbtype nucl
@@ -190,6 +203,10 @@ cd $ncbi
 #get virus taxon id
 cut -f1 $pv_taxonFile | sed '/TaxonId/d'> $taxondb/taxIDs
 #extract virus sequences from NCBI nt database
+
+#taxonomy4blast.sqlite3 is required by Blast (>v2.13), make a softlink from $nt_db to the work directory
+ln -s $ncbi_nt/taxonomy4blast.sqlite3 ./
+
 blastdbcmd -db $ncbi_nt/nt -dbtype nucl -taxidlist $taxondb/taxIDs -out plantvirus.0.fa
 
 #remove unwanted sequences
