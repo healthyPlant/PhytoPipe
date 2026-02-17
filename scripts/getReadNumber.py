@@ -113,6 +113,10 @@ def sumQual(fastqFolder, input_format, strand1, strand2):
     #convert set to list
     for i in range(len(outputs)):
         outputs[i] = list(outputs[i])
+    #remove _001 in sample name    
+    #for output in outputs:
+    #    if output[0].endswith("_001"):
+    #        output[0] = output[0].replace("_001", "") 
                
     #check paired-end or single-end read
     paired = False
@@ -129,9 +133,11 @@ def sumQual(fastqFolder, input_format, strand1, strand2):
 
     for output in outputs:
         if strand1 and output[0].endswith(strand1):
+            #sname = output[0].replace("_"+strand1, "")
             sname = re.sub(rf"_{strand1}$", "", output[0]) 
             avgQualDictR1[sname] = output[1:len(output)]
         elif strand2 and output[0].endswith(strand2): #paired-end read
+            #sname = output[0].replace("_"+strand2, "")
             sname = re.sub(rf"_{strand2}$", "", output[0])
             avgQualDictR2[sname] = output[1:len(output)]
         else: #single-end read
@@ -163,7 +169,7 @@ def parseArguments():
 def main():
     ### Input arguments
     options = parseArguments()
-    workdir = options.workdir  
+    workdir = options.workdir  #'/ppq/data2/pgqp_pipeline/Run45'
     strand1 = options.strand1  #R1
     strand2 = options.strand2  #R2
     input_format = options.format #"fastq.gz"
@@ -183,6 +189,24 @@ def main():
     samples = [os.path.basename(x) for x in glob.glob(trimLogDir + '/*.log')]
     samples = [x.replace(".log","") for x in samples]
 
+    orderSmp = [" " for x in samples]
+    sampleSign = [] #save wheather the sample have a sample number _S#
+    if os.path.exists(statJsonFile):
+        #sort sample by S\d number
+        for sample in samples:
+            m = re.match("\S+_S(\d+)$",sample)
+            if m:
+                sNum = int(m.groups()[0]) - 1
+                orderSmp[sNum] = sample
+                sampleSign.append(True)
+            else:
+                sampleSign.append(False)
+
+        if not all(sampleSign): #if one sample name doesn't have a sample number _S#, do not use ordered samples
+            orderSmp = samples
+    else:
+        orderSmp = samples
+
     header="Sample\tRawReads\tRawYield(Mbases)\tPercent>=Q30Bases\tRawMeanQualityScore\tRibosomalRNA\tReadsAfterRemoveDuplicates\tControlReads\tReadsAfterTrim\tPossiblePathogenReads"
 
     fout = open(outFile, 'w')
@@ -194,8 +218,8 @@ def main():
     else:
         qualDict = sumQual(rawDir, input_format, strand1, strand2)
     #print(qualDict)
-   
-    for sample in samples:
+    #print(orderSmp)    
+    for sample in orderSmp:
         rmFile = removeLogDir + "/" + sample + ".log"
         ctFile = contaminantLogDir + "/" + sample + ".log"
         tmFile = trimLogDir + "/" + sample + ".log"
@@ -249,6 +273,9 @@ def main():
 
         #count read number from fastq.gz file
         #for paired-end, 2*read#
+        if paired:
+            clFile = cleanDir + "/" + sample + "_R2.pathogen.fastq.gz" 
+        #print(clFile)
         if os.path.exists(clFile):
             cmd = "zcat " + clFile + " | wc -l"
             clean = subprocess.check_output(cmd, shell=True)
@@ -257,6 +284,7 @@ def main():
                 clean = str(int(clean) * 2)
         else:
             clean = 0
+        #print(f"clean reads: {clean}")
         percentDup = "{:.2f}".format(float(dup)/float(raw)*100)
         percentTrim = "{:.2f}".format(float(trim)/float(raw)*100)
         percentClean = "{:.2f}".format(float(clean)/float(raw)*100)
