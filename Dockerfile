@@ -56,7 +56,7 @@ RUN pip install biopython
 RUN apt-get -qq -y install parallel
 
 #install multiqc
-RUN pip install multiqc
+RUN pip install multiqc==1.12
 
 #install pandas
 RUN pip install pandas
@@ -90,7 +90,7 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2
 
 #install autoconf-2.69, this version is required by Trinity2.15
 WORKDIR $SRC
-RUN wget ftp://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz && \
+RUN wget https://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz && \
     tar zxvf autoconf-2.69.tar.gz && \
     cd autoconf-2.69 && \
     ./configure --prefix=/usr/ && \
@@ -172,10 +172,10 @@ RUN rm -rf $SRC/KronaTools-2.8.1.tar
 
 #instal NCBI EDirect
 WORKDIR $SRC
-RUN wget ftp://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/edirect.tar.gz  && \
+RUN wget https://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/edirect.tar.gz  && \
     gunzip -c edirect.tar.gz | tar xf -  && \
     cd edirect && \
-    wget ftp://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/xtract.Linux.gz &&\
+    wget https://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/xtract.Linux.gz &&\
     gunzip -f xtract.Linux.gz && \
     chmod +x xtract.Linux && \
     cd .. && \
@@ -217,9 +217,9 @@ RUN wget https://github.com/samtools/bcftools/releases/download/1.21/bcftools-1.
 
 #Installing NCBI-BLAST+
 WORKDIR $SRC
-RUN wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.16.0+-x64-linux.tar.gz && \
-    tar -xvzf ncbi-blast-2.16.0+-x64-linux.tar.gz 
-RUN ln -s $SRC/ncbi-blast-2.16.0+/bin/* $BIN/.
+RUN wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.17.0/ncbi-blast-2.17.0+-x64-linux.tar.gz && \
+    tar -xvzf ncbi-blast-2.17.0+-x64-linux.tar.gz 
+RUN ln -s $SRC/ncbi-blast-2.17.0+/bin/* $BIN/.
 
 #install diamond
 WORKDIR $SRC
@@ -233,17 +233,17 @@ RUN wget https://github.com/bioinformatics-centre/kaiju/archive/refs/tags/v1.10.
     tar -xvzf v1.10.1.tar.gz && \
     cd kaiju-1.10.1/src && \
     make && \
-    ln -s $SRC/kaiju-1.9.2/bin/* $BIN/  && \
+    ln -s $SRC/kaiju-1.10.1/bin/* $BIN/  && \
     cd ..
 
 WORKDIR $SRC
 #install recent version Kraken2
 #apt-get -qq -y install kraken2 #download library fail error, use git version
-RUN wget https://github.com/DerrickWood/kraken2/archive/refs/tags/v2.14.tar.gz && \
-    tar -xvzf v2.14.tar.gz && \
-    cd kraken2-2.14 && \
-    ./install_kraken2.sh $SRC/kraken2.14 && \
-    ln -s $SRC/kraken2.14/kraken2* $BIN/  && \
+RUN wget https://github.com/DerrickWood/kraken2/archive/refs/tags/v2.17.1.tar.gz && \
+    tar -xvzf v2.17.1.tar.gz && \
+    cd kraken2-2.17.1 && \
+    ./install_kraken2.sh $SRC/kraken2.17.1 && \
+    ln -s $SRC/kraken2.17.1/kraken2* $BIN/  && \
     cd ..
 
 WORKDIR $SRC
@@ -288,10 +288,11 @@ RUN rm -rf $SRC/quast-5.2.0
 RUN rm -rf $SRC/htslib-1.21
 RUN rm -rf $SRC/samtools-1.21
 RUN rm -rf $SRC/bcftools-1.21
+RUN rm -rf $SRC/snakemake-7.18.0
 RUN rm -rf $SRC/autoconf-2.69
 RUN rm -rf $SRC/trinityrnaseq-v2.15.1
 RUN rm -rf $SRC/mummer-4.0.0rc1
-RUN rm -rf $SRC/kraken2-2.14
+RUN rm -rf $SRC/kraken2-2.17.1
 
 # some cleanup
 WORKDIR $SRC
