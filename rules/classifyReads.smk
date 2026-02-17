@@ -97,7 +97,7 @@ rule run_krona:
 	message:
 		'''--- {wildcards.sample} kraken2 to krona'''
 	shell:
-		"""
+		r"""
 		cat {input} | awk "{{if(\$1>=0.01) print}}"  > {output.reducedReport}  #reduce report size
 		ktImportTaxonomy {params} -o {output.kreport} {output.reducedReport}
 		"""   
