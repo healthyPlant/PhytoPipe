@@ -36,30 +36,38 @@ def getReadStat(inFile, strand1, strand2):
     statDict0 = {}
     statDict = {}
     #get sample name, read length and total read number from file
+    #print(inFile)
     with open(inFile) as f:
         f.readline() #skip the title
         lines = f.readlines()
         for line in lines: 
             line = line.strip()
             cells = line.split("\t")
+            #print(cells)
             smpName = cells[0]  #sample"_S1_R1_001"
 
             if strand1 and (cells[0].endswith('_R1') or cells[0].endswith('_R2')):  #for trimmed sample names
+                #print(cells[0], "Strand1 ", strand1, "Strand2 ", strand2)
                 smpName = re.sub('_R[1|2]$','', smpName)
-                statDict0[smpName] = {}
+                if smpName not in statDict0:
+                    statDict0[smpName] = {}
             elif strand1 and (cells[0].endswith(strand1) or cells[0].endswith(strand1 + '_001')):  #strand1 != ''
+                #print(cells[0], "Strand1 ", strand1)
                 smpName = re.sub(r"(.*)_%s(_001)?$" % strand1, "\\1", cells[0])  #cells[0].replace("_"+strand1, "")
                 statDict0[smpName] = {}
             elif (cells[0].endswith(strand2) or cells[0].endswith(strand2 + '_001')):
+                #print(cells[0], "Strand2 ", strand2)
                 smpName = re.sub(r"(.*)_%s(_001)?$" % strand2, "\\1", cells[0])  #cells[0].replace("_"+strand2, "")
                 if smpName not in statDict0:
                     statDict0[smpName] = {}
             else:
                 smpName = cells[0]
                 statDict0[smpName] = {}
-
+            #print("sample name", smpName)    
             statDict0[smpName].setdefault("readLen",[]).append(cells[3])
             statDict0[smpName].setdefault("totalRead",[]).append(cells[5])
+
+                
     #print(statDict0)
     #calculate average read length
     for smpName in statDict0:
@@ -313,9 +321,10 @@ def main():
     mapDir = workdir + '/mapping/map2Ref'
 
     #get total reads
-    readStat = getReadStat(readStatFile, strand1, strand2)
+    readStat = getReadStat(readStatFile, strand1, strand2)  #for raw reads
     #get clean clean reads, afer removing duplicate reads and PhiX174 contaminant, triming low quality bases
-    trimReadStat = getReadStat(trimReadStatFile, strand1, strand2)
+    #trimReadStat = getReadStat(trimReadStatFile, strand1, strand2)
+    trimReadStat = getReadStat(trimReadStatFile, "R1", "R2")
 
     #print(readStat)
     #print(trimReadStat)
