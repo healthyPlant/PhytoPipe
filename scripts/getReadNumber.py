@@ -249,6 +249,9 @@ def main():
 
         #count read number from fastq.gz file
         #for paired-end, 2*read#
+        if paired:
+            clFile = cleanDir + "/" + sample + "_R2.pathogen.fastq.gz" 
+        #print(clFile)
         if os.path.exists(clFile):
             cmd = "zcat " + clFile + " | wc -l"
             clean = subprocess.check_output(cmd, shell=True)
