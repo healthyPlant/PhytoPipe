@@ -46,7 +46,8 @@ def getReadStat(inFile, strand1, strand2):
 
             if strand1 and (cells[0].endswith('_R1') or cells[0].endswith('_R2')):  #for trimmed sample names
                 smpName = re.sub('_R[1|2]$','', smpName)
-                statDict0[smpName] = {}
+                if smpName not in statDict0:
+                    statDict0[smpName] = {}
             elif strand1 and (cells[0].endswith(strand1) or cells[0].endswith(strand1 + '_001')):  #strand1 != ''
                 smpName = re.sub(r"(.*)_%s(_001)?$" % strand1, "\\1", cells[0])  #cells[0].replace("_"+strand1, "")
                 statDict0[smpName] = {}
