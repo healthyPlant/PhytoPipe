@@ -56,6 +56,7 @@ def getMonitorPathogen(mpFile):
         for line in f:
             line = line.rstrip()
             cells = line.split("\t")
+            #print("taxons: ", cells[0], cells[1])
             mpDict[cells[0]] = cells[1]  #taxon id => taxon name
     return mpDict
 
@@ -339,11 +340,16 @@ def mergeBlast(blastnDict, blastxDict, contig_file):
     for id in idDict:
         seq = contig_dict[id]
         if idDict[id] == 2:  #id in both blastx and blastn
-            outDict[id] = "\t".join(blastxDict[id]) + "\t" + "\t".join(blastnDict[id]) + "\t" + seq.seq
+            #remove '\xa0' in the blast result before join
+            bx_str = "\t".join(blastxDict[id]).replace('\xa0', ' ')
+            bn_str = "\t".join(blastnDict[id]).replace('\xa0', ' ')
+            outDict[id] = bx_str + "\t" + bn_str + "\t" + str(seq.seq)  # "\t".join(blastxDict[id]) + "\t" + "\t".join(blastnDict[id]) + "\t" + seq.seq
         elif idDict[id] == 1: #id in only blastn
-            outDict[id] = empty + "\t".join(blastnDict[id]) + "\t" + seq.seq
+            bn_str = "\t".join(blastnDict[id]).replace('\xa0', ' ')
+            outDict[id] = empty + "\t" + bn_str + "\t" + str(seq.seq) #empty + "\t".join(blastnDict[id]) + "\t" + seq.seq
         else:  #id in only blastx
-            outDict[id] = "\t".join(blastxDict[id]) + "\t" + empty + seq.seq
+            bx_str = "\t".join(blastxDict[id]).replace('\xa0', ' ')
+            outDict[id] = bx_str + "\t" + empty + "\t" + str(seq.seq) #"\t".join(blastxDict[id]) + "\t" + empty + seq.seq
 
     contig_dict.close()
     
