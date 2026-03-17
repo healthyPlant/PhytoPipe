@@ -1016,12 +1016,10 @@ TaxonId	VirusSpecies
 1980427	Emaravirus fici; Fig mosaic emaravirus
 1980431	Emaravirus idaeobati; raspberry leaf blotch emaravirus
 2660760	Emaravirus kiwii
-1980433	Emaravirus rosae; Rose rosette emaravirus
-1980430	Emaravirus toordali; pigeonpea sterility mosaic emaravirus 2
-1980428	Emaravirus tritici; High Plains wheat mosaic virus
-2843908	Emaravirus verbanni
+1980433	Emaravirus rosae
+1980430	Emaravirus toordali
+1980428	Emaravirus tritici
 2020881	Emilia sonchifolia yellow vein Thailand virus
-2844115	Emilia yellow vein betasatellite
 2496574	Emilia yellow vein Fujian betasatellite
 2496575	Emilia yellow vein Fujian virus
 2560412	Emilia yellow vein Thailand virus
@@ -3250,3 +3248,4 @@ TaxonId	VirusSpecies
 390849	Zucchini yellow fleck virus
 12232	Zucchini yellow mosaic virus
 253701	Zygocactus virus X
+126071  Sugarcane mild mosaic virus

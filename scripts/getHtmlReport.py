@@ -100,8 +100,10 @@ def extractKraken(kFile, mpFile):
             if cells[5] == 'uncultured organism':
                 continue
 
-            if eFlag != 1 and (cells[3]=='D' or cells[3]=='K'):
+            #Taxonomic Rank Code: R for root, D for Domain, K for Kingdom, P for Phylum, C for Class, O for Order, F for Family, G for Genus, S for Species). 
+            if eFlag != 1 and (cells[3].startswith('D') or cells[3].startswith('R')):
                 eFlag = bFlag = fFlag = oFlag = 0 #reset marker
+
 
             if cells[4] == '2759': #Eukaryota
                 eFlag = 1
@@ -132,7 +134,7 @@ def extractKraken(kFile, mpFile):
                     bacteriaNumberDict[lineNumber] = int(cells[2])
                     bacteriaLineDict[lineNumber] = [cells[0],cells[2],cells[4],cells[5],'Bacteria']
 
-                elif 'Candidatus Phytoplasma' in cells[5] and float(cells[2]) > 20: #keep read >20 for Phytoplasma
+                elif 'phytoplasma' in cells[5] and float(cells[2]) > 20: #keep read >20 for Phytoplasma
                     #report Candidatus Phytoplasma
                     kDict['Bacteria'].append([cells[0],cells[2],cells[4],cells[5],'Bacteria'])
                 elif cells[4] in mpDict and float(cells[2]) > 100:
@@ -826,4 +828,5 @@ html_string += '''</article>
 # Finally, write the html string to a local file.
 fout = open(outFile,'w')
 fout.write(html_string)
+
 fout.close()

@@ -1,5 +1,5 @@
 FROM ubuntu:20.04
-LABEL org.opencontainers.image.authors="xhu556@gmail.com"
+LABEL org.opencontainers.image.authors="Alex Hu"
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -305,3 +305,4 @@ ADD phytopipe $SRC/phytopipe
 ################################################
 ## be sure this is last!
 COPY Dockerfile $SRC/phytopipe/.
+

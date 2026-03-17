@@ -23,8 +23,6 @@ strand2 = config["strand2"]
 samples = config["samples"]
 #print(samples)
 rawFiles = glob.glob(rawReadDir + "/*." + input_format)
-#true001 = 0
-
 
 #to prevent snakemake from interpreting wildcard strings as regular expressions. For this, escape each wildcard value using wildcard_constraints.
 wildcard_constraints:
@@ -95,10 +93,6 @@ if (seq_type == "se"):
 		shell:
 			"""
 			fastqc -t {threads} --quiet --outdir {qcDir}/raw_fastqc {input} >> {log} 2>&1
-			if [[ -s qc/raw_fastqc/{wildcards.sample}_{params.strand1}_001_fastqc.html ]]; then
-				mv qc/raw_fastqc/{wildcards.sample}_{params.strand1}_001_fastqc.html  {output.html}  #rename output file to fit multiQC input
-				mv qc/raw_fastqc/{wildcards.sample}_{params.strand1}_001_fastqc.zip  {output.zip}
-			fi
 			if [[ -s qc/raw_fastqc/{wildcards.sample}_{params.strand1}_fastqc.html ]]; then
 				mv qc/raw_fastqc/{wildcards.sample}_{params.strand1}_fastqc.html  {output.html}  #rename output file to fit multiQC input
 				mv qc/raw_fastqc/{wildcards.sample}_{params.strand1}_fastqc.zip  {output.zip}
@@ -233,12 +227,6 @@ if (seq_type == "pe"):
 		shell:
 			"""
 			fastqc -t {threads} --quiet --outdir {qcDir}/raw_fastqc {input} >> {log} 2>&1
-			echo {input}
-			if [[ -s qc/raw_fastqc/{wildcards.sample}_{wildcards.strand}_001_fastqc.html ]]; then
-				mv qc/raw_fastqc/{wildcards.sample}_{wildcards.strand}_001_fastqc.html  {output.html}  #rename output file to fit multiQC input
-				mv qc/raw_fastqc/{wildcards.sample}_{wildcards.strand}_001_fastqc.zip  {output.zip}
-			fi
-			"""
 
 	rule check_rRNA_pe:
 		"""

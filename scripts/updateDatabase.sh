@@ -202,6 +202,7 @@ echo "#8. build plant virus blastn db"
 cd $ncbi
 #get virus taxon id
 cut -f1 $pv_taxonFile | sed '/TaxonId/d'> $taxondb/taxIDs
+
 #extract virus sequences from NCBI nt database
 
 #taxonomy4blast.sqlite3 is required by Blast (>v2.13), make a softlink from $nt_db to the work directory
